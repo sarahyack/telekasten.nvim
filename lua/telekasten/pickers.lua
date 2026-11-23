@@ -132,8 +132,11 @@ function M.picker_actions.paste_link(opts)
     opts.subdirs_in_links = opts.subdirs_in_links
         or config.options.subdirs_in_links
     return function(prompt_bufnr)
-        actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
+        if not selection then
+            return
+        end
+        actions.close(prompt_bufnr)
         local pinfo = fileutils.Pinfo:new({
             filepath = selection.filename or selection.value,
             opts,
@@ -155,10 +158,13 @@ function M.picker_actions.yank_link(opts)
         opts = opts or {}
         opts.subdirs_in_links = opts.subdirs_in_links
             or config.options.subdirs_in_links
+        local selection = action_state.get_selected_entry()
+        if not selection then
+            return
+        end
         if opts.close_after_yanking then
             actions.close(prompt_bufnr)
         end
-        local selection = action_state.get_selected_entry()
         local pinfo = fileutils.Pinfo:new({
             filepath = selection.filename or selection.value,
             opts,
