@@ -26,9 +26,8 @@ function M.vaults(telekasten, opts)
         if selection then
             local vault = selection.value[2]
             if change_directory then
-                local home = vault.home or vim.fn.expand("~/zettelkasten")
                 local ok, err =
-                    pcall(vim.cmd, "cd " .. vim.fn.fnameescape(home))
+                    pcall(vim.cmd, "cd " .. vim.fn.fnameescape(vault.home))
                 if not ok then
                     vim.notify(tostring(err), vim.log.levels.ERROR)
                     return

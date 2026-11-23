@@ -1955,6 +1955,16 @@ end
 -- Sets the available vaults and passes further configuration options to Setup
 ---@param cfg MultiVaultConfig | VaultConfig table of configuration values
 local function _setup(cfg)
+    -- Vault homes are relative to the directory where setup was called.
+    local function resolve_home(vault)
+        local home = Path
+            :new(vim.fn.fnamemodify(vault.home or "~/zettelkasten", ":p"))
+            :absolute()
+        return vim.tbl_extend("force", vault, { home = home })
+    end
+    if cfg.vaults then
+        cfg.vaults = vim.tbl_map(resolve_home, cfg.vaults)
+    end
     if cfg.vaults ~= nil and cfg.default_vault ~= nil then
         M.vaults = cfg.vaults
         cfg.vaults = nil
@@ -1967,8 +1977,8 @@ local function _setup(cfg)
         M.vaults = cfg.vaults or {}
         cfg.vaults = nil
         ---@cast cfg VaultConfig
-        M.vaults["default"] = cfg
-        Setup(cfg)
+        M.vaults["default"] = resolve_home(cfg)
+        Setup(M.vaults["default"])
     end
 end
 
