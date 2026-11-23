@@ -926,6 +926,11 @@ telekasten.goto_thisyear() ~
 
                                                   *telekasten.search_notes()*
 telekasten.search_notes() ~
+  The vault setting `search_ignore_patterns` adds Lua file-path patterns to
+  Telescope’s global exclusions for this command and both modes of
+  |telekasten.find_notes()|. For example: >
+      search_ignore_patterns = { "logseq/bak/" },
+<
   Search through all notes via Telescope live grep, initialized with the word
   under the cursor.
 

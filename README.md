@@ -225,6 +225,10 @@ custom mappings.
 
 ### Commands
 
+To omit Logseq backups from the name and content searches in a vault, set
+`search_ignore_patterns = { "logseq/bak/" }` in its configuration. The entries
+are Lua patterns and supplement Telescope’s global `file_ignore_patterns`.
+
 The following sub-commands are defined:
 
 - `panel` : brings up the [command palette](#command-palette)

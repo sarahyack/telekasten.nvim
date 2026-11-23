@@ -419,6 +419,18 @@ local function RenameNote()
     )
 end
 
+local function search_ignore_patterns(live_grep)
+    local patterns = config.options.search_ignore_patterns
+    if patterns then
+        local base = conf.file_ignore_patterns
+        if live_grep then
+            local grep = require("telescope.config").pickers.live_grep or {}
+            base = grep.file_ignore_patterns or base
+        end
+        return vim.list_extend(vim.deepcopy(base or {}), patterns)
+    end
+end
+
 --- FindNotes(opts)
 -- Select from notes
 -- @param opts table Options if they should differ from user's configuration
@@ -450,6 +462,7 @@ local function FindNotes(opts)
         if opts.with_live_grep then
             builtin.live_grep({
                 prompt_title = "Find notes by live grep",
+                file_ignore_patterns = search_ignore_patterns(true),
                 cwd = cwd,
                 find_command = find_command,
                 attach_mappings = attach_mappings,
@@ -458,6 +471,7 @@ local function FindNotes(opts)
         else
             fileutils.find_files_sorted({
                 prompt_title = "Find notes by name",
+                file_ignore_patterns = search_ignore_patterns(),
                 cwd = cwd,
                 find_command = find_command,
                 attach_mappings = attach_mappings,
@@ -626,6 +640,7 @@ local function SearchNotes(opts)
 
         builtin.live_grep({
             prompt_title = "Search in notes",
+            file_ignore_patterns = search_ignore_patterns(true),
             cwd = config.options.home,
             search_dirs = { config.options.home },
             default_text = opts.default_text or vim.fn.expand("<cword>"),
