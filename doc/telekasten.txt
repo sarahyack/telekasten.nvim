@@ -204,6 +204,9 @@ telekasten.setup({opts})
             },
             daily = {
                 enabled = true,
+                -- Days skipped by prevworkday and nextworkday (Sun=1, Sat=7).
+                -- An empty list includes every day. Keep at least one workday.
+                days_off = { 1, 7 },
                 root = "",
                 folder_path = "",
                 filename = "{date}",
@@ -870,6 +873,9 @@ telekasten.goto_periodic() ~
   `quarter_yq`, `year`). A list of available date_refs is listed under the
   template_files section, link below.
 
+  Use `goto_periodic({}, "prevworkday")` or `goto_periodic({}, "nextworkday")`
+  to move by the configured work calendar, including when an off-day note exists.
+
   If the specified periodic note is not present, it will be created if
   the respective kind's `create_if_missing` setting is set to `true`.
 
@@ -1229,6 +1235,8 @@ The following substitutions will be made during new note creation:
 | `{{date}}`             | date in iso format              | 2021-11-21                  |
 | `{{time24}}`           | time with 24 hour clock         | 19:12:23                    |
 | `{{time12}}`           | time with 12 hour clock         | 07:12:23 PM                 |
+| `{{prevworkday}}`      | previous working day, iso       | 2021-11-19                  |
+| `{{nextworkday}}`      | next working day, iso           | 2021-11-22                  |
 | `{{prevday}}`          | previous day, iso               | 2021-11-20                  |
 | `{{nextday}}`          | next day, iso                   | 2021-11-22                  |
 | `{{hdate}}`            | date in long format             | Sunday, November 21st, 2021 |
