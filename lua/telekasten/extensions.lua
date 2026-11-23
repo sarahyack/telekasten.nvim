@@ -1,4 +1,5 @@
 local config = require("telekasten.config")
+local Path = require("plenary.path")
 local scan = require("plenary.scandir")
 
 local M = {}
@@ -12,6 +13,42 @@ function M.suffix(name)
         end
     end
     return suffix
+end
+
+-- Qualify a collision with the vault-relative path, or the full path in another root.
+local function qualified_path(path)
+    local prefix = config.options.home:gsub("/$", "") .. "/"
+    if vim.startswith(path, prefix) then
+        return "./" .. path:sub(#prefix + 1)
+    end
+    return path
+end
+
+-- A recursive grep only needs each outermost note directory once.
+function M.search_roots()
+    local roots = require("telekasten.utils.files").assemble_roots({
+        include_aux = false,
+    })
+    for i, root in ipairs(roots) do
+        roots[i] = vim.fn.simplify(root .. "/.")
+    end
+    table.sort(roots)
+    local dirs = {}
+    for _, root in ipairs(roots) do
+        local covered = false
+        for _, dir in ipairs(dirs) do
+            if
+                root == dir or vim.startswith(root, dir:gsub("/$", "") .. "/")
+            then
+                covered = true
+                break
+            end
+        end
+        if not covered then
+            table.insert(dirs, root)
+        end
+    end
+    return dirs
 end
 
 -- Index both qualified and bare link targets, keeping every matching file.
@@ -35,6 +72,7 @@ function M.index()
             local ext = M.suffix(path)
             if ext then
                 files[path] = true
+                add(path, path)
                 local prefix = root:sub(-1) == "/" and root or root .. "/"
                 local relative = path:sub(#prefix + 1)
                 if root == config.options.home then
@@ -55,18 +93,21 @@ function M.index()
 end
 
 function M.link_title(stem, ext, targets, path)
-    if ext ~= config.options.extension or #(targets[stem] or {}) > 1 then
-        local name = stem .. ext
-        if #(targets[name] or {}) > 1 and path then
-            local prefix = config.options.home:gsub("/$", "") .. "/"
-            if vim.startswith(path, prefix) then
-                return "./" .. path:sub(#prefix + 1)
-            end
-            return path
-        end
-        return name
+    local function identifies(title)
+        local matches = targets[title]
+        return matches and #matches == 1 and matches[1] == path
     end
-    return stem
+    if ext == config.options.extension and identifies(stem) then
+        return stem
+    end
+    if identifies(stem .. ext) then
+        return stem .. ext
+    end
+    -- Allow a typed title in the insert-link picker to name a future note.
+    if not targets[path] and not targets[stem] then
+        return ext == config.options.extension and stem or stem .. ext
+    end
+    return qualified_path(path)
 end
 
 -- Return the spellings that unambiguously refer to this one note.
@@ -81,14 +122,19 @@ function M.unique_titles(targets, path)
     return titles
 end
 
+-- Keep the original heading or alias, including the spacing around its separator.
+function M.split_link(link)
+    local target, tail = link:match("^([^#|]-)(%s*[#|].*)$")
+    return target or link, tail or ""
+end
+
 local function replace_links(lines, replacements)
     local changed = false
     for i, line in ipairs(lines) do
         local new = line:gsub("%[%[([^%]\n]+)%]%]", function(link)
-            local target, tail = link:match("^([^#|]-)(%s*[#|].*)$")
-            target = target or link
+            local target, tail = M.split_link(link)
             if replacements[target] then
-                return "[[" .. replacements[target] .. (tail or "") .. "]]"
+                return "[[" .. replacements[target] .. tail .. "]]"
             end
         end)
         if new ~= line then
@@ -103,7 +149,8 @@ end
 local function prepare_links(old_path, new_path)
     local targets, files = M.index()
     local ext = M.suffix(new_path)
-    local relative = new_path:sub(#config.options.home:gsub("/$", "") + 2)
+    local qualified = qualified_path(new_path)
+    local relative = qualified:gsub("^%./", "")
     local replacements = {}
     local function collides(name)
         for _, path in ipairs(targets[name] or {}) do
@@ -114,20 +161,24 @@ local function prepare_links(old_path, new_path)
         return false
     end
     for _, old in ipairs(M.unique_titles(targets, old_path)) do
-        local name = old:find("/", 1, true) and relative
-            or vim.fn.fnamemodify(new_path, ":t")
-        if vim.startswith(old, "./") then
-            name = "./" .. relative
+        if Path:new(old):is_absolute() then
+            replacements[old] = new_path
+        elseif vim.startswith(old, "./") then
+            replacements[old] = qualified
+        else
+            local name = old:find("/", 1, true) and relative
+                or vim.fn.fnamemodify(new_path, ":t")
+            local stem = name:sub(1, -#ext - 1)
+            if
+                not M.suffix(old)
+                and not Path:new(name):is_absolute()
+                and ext == config.options.extension
+                and not collides(stem)
+            then
+                name = stem
+            end
+            replacements[old] = collides(name) and qualified or name
         end
-        local stem = name:sub(1, -#ext - 1)
-        if
-            not M.suffix(old)
-            and ext == config.options.extension
-            and not collides(stem)
-        then
-            name = stem
-        end
-        replacements[old] = collides(name) and "./" .. relative or name
     end
 
     local changes = {}

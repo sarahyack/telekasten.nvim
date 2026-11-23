@@ -95,9 +95,6 @@ M.generate_backlink_map = function(opts)
         -- go over file line by line
         for line in io.lines(note_fn) do
             for linktitle in line:gmatch("%[%[(.-)%]%]") do
-                -- strip # from title
-                linktitle = linktitle:gsub("#.*$", "")
-
                 -- now: inc our link count
                 link_counts[note_fn] = link_counts[note_fn] or 0
                 link_counts[note_fn] = link_counts[note_fn] + 1
@@ -105,13 +102,17 @@ M.generate_backlink_map = function(opts)
                 -- and: inc the backlinks of the linked note
                 local fexists, backlinked_file
                 if targets then
-                    local matches = targets[M.remove_alias(linktitle)]
+                    local matches = targets[extensions.split_link(linktitle)]
                     if matches and #matches == 1 then
                         fexists, backlinked_file = true, matches[1]
                     end
                 else
-                    fexists, backlinked_file =
-                        resolve_link(linktitle, file_list, subdir_list, opts)
+                    fexists, backlinked_file = resolve_link(
+                        (linktitle:gsub("#.*$", "")),
+                        file_list,
+                        subdir_list,
+                        opts
+                    )
                 end
                 -- print(
                 --     "note for link `"

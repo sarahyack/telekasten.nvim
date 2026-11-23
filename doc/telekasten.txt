@@ -329,8 +329,10 @@ telekasten.setup({opts})
         Filename extension of your notes, or an ordered list of extensions,
         e.g. { ".md", ".qmd" }. New notes without a suffix use the first.
         Type a configured suffix to create that file type. Alternate extensions
-        and colliding names are explicit in new links. Following an ambiguous
-        bare link shows the matching files; renaming leaves that link alone.
+        and colliding names are explicit in new links. For example,
+        `[[./twin.md]]` identifies the root file even with an archive/twin.md.
+        Following an ambiguous `[[twin]]` offers the matching notes.
+        Renaming one of them preserves that bare link.
 
         Default: '.md'
 

@@ -189,26 +189,7 @@ local function InsertLink(opts)
 
         local attach_mappings = tkpickers.apply_picker_mappings(
             opts,
-            function(prompt_bufnr, _)
-                actions.close(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                if selection == nil then
-                    selection = { filename = action_state.get_current_line() }
-                end
-                local pinfo = fileutils.Pinfo:new({
-                    filepath = selection.filename or selection.value,
-                    opts,
-                })
-                vim.api.nvim_put(
-                    { "[[" .. pinfo.title .. "]]" },
-                    "",
-                    false,
-                    true
-                )
-                if opts.i then
-                    vim.api.nvim_feedkeys("a", "m", false)
-                end
-            end
+            tkpickers.picker_actions.paste_link(opts, true)
         )
 
         -- Open picker for users to chose note, preferring live grep
@@ -369,19 +350,23 @@ local function RenameNote()
             newname = newname:sub(1, -#new_ext - 1)
         end
         new_ext = new_ext or old_ext
-        local newpath = newname:match("(.*/)") or ""
-        newpath = config.options.home .. "/" .. newpath
-
-        -- If no subdir specified, place the new note in the same place as old note
-        if
-            config.options.subdirs_in_links == true
-            and newpath == config.options.home .. "/"
-            and oldfile.sub_dir ~= ""
-        then
-            newname = oldfile.sub_dir .. "/" .. newname
+        local fname
+        if config.options.note_extensions then
+            local dir = newname:find("/", 1, true) and config.options.home
+                or vim.fn.fnamemodify(oldfile.filepath, ":h")
+            fname = Path:new(newname):is_absolute() and (newname .. new_ext)
+                or Path:new(dir, newname .. new_ext):absolute()
+        else
+            if
+                config.options.subdirs_in_links
+                and not newname:find("/", 1, true)
+                and oldfile.sub_dir ~= ""
+            then
+                newname = oldfile.sub_dir .. "/" .. newname
+            end
+            fname = config.options.home .. "/" .. newname .. new_ext
         end
-
-        local fname = config.options.home .. "/" .. newname .. new_ext
+        local newpath = vim.fn.fnamemodify(fname, ":h")
         local fexists = fileutils.file_exists(fname)
         if fexists then
             tkutils.print_error("File alreay exists. Renaming abandoned")
@@ -673,6 +658,8 @@ local function ShowBacklinks(opts)
         local escaped_title = string.gsub(title, "%(", "\\(")
         escaped_title = string.gsub(escaped_title, "%)", "\\)")
 
+        local search_dirs = { config.options.home }
+        local suffix_pattern = "([#|].+)?"
         if config.options.note_extensions then
             local titles = extensions.unique_titles(
                 extensions.index(),
@@ -682,6 +669,8 @@ local function ShowBacklinks(opts)
                 titles[i] = vim.fn.escape(target, [=[\.^$*+?(){}|[]]=])
             end
             escaped_title = "(" .. table.concat(titles, "|") .. ")"
+            search_dirs = extensions.search_roots()
+            suffix_pattern = "([[:blank:]]*[#|][^]]*)?"
         end
 
         builtin.live_grep({
@@ -689,8 +678,11 @@ local function ShowBacklinks(opts)
             results_title = "Backlinks to " .. title,
             prompt_title = "Search",
             cwd = config.options.home,
-            search_dirs = { config.options.home },
-            default_text = "\\[\\[" .. escaped_title .. "([#|].+)?\\]\\]",
+            search_dirs = search_dirs,
+            default_text = "\\[\\["
+                .. escaped_title
+                .. suffix_pattern
+                .. "\\]\\]",
             find_command = config.options.find_command,
             attach_mappings = tkpickers.apply_picker_mappings(opts),
         })
@@ -945,7 +937,7 @@ local function FollowLink(opts)
                         prompt_title = "Follow link to note...",
                         files = pinfo.matches,
                         cwd = pinfo.root_dir,
-                        default_text = title,
+                        default_text = pinfo.matches and "" or title,
                         find_command = config.options.find_command,
                         attach_mappings = tkpickers.apply_picker_mappings(opts),
                         sort = config.options.sort,

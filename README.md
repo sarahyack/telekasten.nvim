@@ -148,15 +148,21 @@ require('telekasten').setup({
 })
 ```
 
-Set `extension = { ".md", ".qmd" }` in a vault to use both file types. New
-notes use the first extension unless you type another configured suffix.
-For example, creating `Report.qmd` inserts no extra `.md`. If both `Report.md`
-and `Report.qmd` exist, following `[[Report]]` shows both and renaming either
-leaves that bare link alone. New links distinguish the two filenames.
-
 **NOTE:** For Windows users, please indicate the path as
 `C:/Users/username/zettelkasten/`. See `:h telekasten.windows` for more details
 about the specificities for Windows.
+
+#### Note extensions
+
+A vault can contain notes with several filename extensions. Set
+`extension = { ".md", ".qmd" }` to search and link both kinds. New notes use
+the first extension unless you include another configured extension in the title.
+
+When two files share a name, selecting one inserts a link that leads back to
+that file. For example, selecting the root `twin.md` alongside
+`archive/twin.md` can produce `[[./twin.md]]`. An existing bare `[[twin]]`
+that matches both `twin.md` and `twin.qmd` offers both choices. Renaming
+either note leaves that ambiguous link alone.
 
 ### Suggested dependencies
 
