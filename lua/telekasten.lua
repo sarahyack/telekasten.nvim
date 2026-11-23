@@ -911,25 +911,46 @@ local function FollowLink(opts)
             filepath = config.options.home .. "/" .. filepath
             fileutils.check_dir_and_ask(filepath, "", function()
                 -- check if fname exists anywhere
-                local pinfo = fileutils.Pinfo:new({ title = title })
+                local direct = opts.follow_link_auto_open
+                if direct == nil then
+                    direct = config.options.follow_link_auto_open
+                end
+                local pinfo = fileutils.Pinfo:new({
+                    title = title,
+                    check_ambiguous = direct,
+                })
                 local function picker()
+                    if
+                        direct
+                        and (not pinfo.matches or #pinfo.matches == 1)
+                        and fileutils.file_exists(pinfo.filepath)
+                    then
+                        vim.cmd("edit " .. vim.fn.fnameescape(pinfo.filepath))
+                        tkpickers.picker_actions.post_open()
+                        return
+                    end
+                    local candidates = pinfo.matches
+                    if vim.startswith(title, "./") then
+                        candidates = fileutils.file_exists(pinfo.filepath)
+                                and { pinfo.filepath }
+                            or {}
+                    end
                     fileutils.find_files_sorted({
                         prompt_title = "Follow link to note...",
+                        files = candidates,
                         cwd = pinfo.root_dir,
-                        default_text = title,
+                        default_text = candidates and "" or title,
                         find_command = config.options.find_command,
                         attach_mappings = tkpickers.apply_picker_mappings(opts),
                         sort = config.options.sort,
                     })
                 end
 
-                if
-                    (pinfo.fexists ~= true)
-                    and (
-                        (opts.follow_creates_nonexisting == true)
-                        or config.options.follow_creates_nonexisting == true
-                    )
-                then
+                local create = opts.follow_creates_nonexisting
+                if create == nil then
+                    create = config.options.follow_creates_nonexisting
+                end
+                if not pinfo.fexists and create then
                     if opts.template_handling == "always_ask" then
                         return on_create_with_template(opts, title)
                     end

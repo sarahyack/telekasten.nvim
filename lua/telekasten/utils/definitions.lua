@@ -54,6 +54,7 @@
 ---@field uuid_type "%Y%m%d%H%M" | string
 ---@field uuid_sep "-" | string
 ---@field filename_space_subst string|nil
+---@field follow_link_auto_open? boolean
 ---@field follow_creates_nonexisting boolean
 ---@field external_link_follow boolean
 ---@field journal_auto_open boolean
