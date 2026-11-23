@@ -172,6 +172,11 @@ pick the correct illustrations for your note.
 
 #### Image pasting
 
+Set `images` in your vault configuration to choose where pasted images go.
+Use an absolute path or a directory relative to `home`, such as `images = "img"`.
+The default is the vault home. Existing `image_subdir` configurations still work,
+and `images` takes precedence when both are set.
+
 - [xclip](https://github.com/astrand/xclip)
 - [wl-clipboard](https://github.com/bugaevc/wl-clipboard)
 
