@@ -235,7 +235,9 @@ The following sub-commands are defined:
 - `insert_link` : Insert a link to a note
 - `follow_link` : Follow the link under the cursor
 - `goto_today` : Open today's daily note.
-- `new_note` : Create a new note, prompts for title
+- `new_note` : Create a new note from the title you enter. Include a directory
+  to choose its location. For example, `bar` and `foo/bar` create two distinct
+  notes. Entering the same path again preserves the existing file.
 - `goto_thisweek` : Open this week's weekly note.
 - `find_weekly_notes` : Find weekly notes by title (calendar week).
 - `goto_thismonth` : Open this month's monthly note.
@@ -342,10 +344,6 @@ switch between them easily. Simply add data to the `vaults` table in the
     configuration and configure each vault as you wish.
 
 ### Link notation
-
-When creating a note, the path you enter identifies the new note. For example,
-`bar` and `foo/bar` can coexist in the vault. An existing note at the requested
-path keeps its contents.
 
 The following links are supported:
 

@@ -795,10 +795,12 @@ parameters:
 
                                                       *telekasten.new_note()*
 telekasten.new_note() ~
-  The title can include a subdirectory. The create command checks the requested
-  path, so `bar` and `foo/bar` can both exist.
   Prompts for a title and creates a new note by the `new_note` template, then
   shows it in Telescope.
+
+  Include a directory in the title to choose the note's location. For example,
+  `bar` and `foo/bar` can both exist. Entering the same path again preserves the
+  existing file.
 
   See also: ~
       - |telekasten.settings.template_new_note|
