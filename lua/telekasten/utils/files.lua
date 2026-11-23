@@ -654,6 +654,7 @@ function M.Pinfo:resolve_link(title, opts)
         kind = "yearly"
     end
 
+    local from_home = vim.startswith(title, "./")
     local matches = opts.check_ambiguous and {}
     local function found(path)
         if matches and not vim.tbl_contains(matches, path) then
@@ -663,7 +664,7 @@ function M.Pinfo:resolve_link(title, opts)
         self.fexists = true
     end
 
-    if kind ~= nil then
+    if not from_home and kind ~= nil then
         local path, _, root_dir, _ =
             periodic.build_path(opts.periodic, kind, dinfo, opts.extension)
         if path and M.file_exists(path) then
@@ -677,7 +678,7 @@ function M.Pinfo:resolve_link(title, opts)
         found(home_path)
     end
 
-    if not self.fexists or matches then
+    if not from_home and (not self.fexists or matches) then
         local subdirs = scan.scan_dir(opts.home, { only_dirs = true })
         for _, folder in ipairs(subdirs) do
             local path = folder .. "/" .. self.filename
@@ -700,7 +701,9 @@ function M.Pinfo:resolve_link(title, opts)
         --       I bet someone will want the info in there, so let's put it in if possible
         _, _, _, _, _, self.calendar_info = check_if_periodic(self.title) -- will set today as default, so leave in!
 
-        if opts.new_note_location == "smart" then
+        if from_home then
+            self.filepath = home_path
+        elseif opts.new_note_location == "smart" then
             if kind ~= nil and self.calendar_info ~= nil then
                 local path, _, root_dir, _ = periodic.build_path(
                     opts.periodic,

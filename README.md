@@ -32,8 +32,8 @@ based on [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
 
 ## Search-based navigation
 
-Every navigation action, like following a link, is centered around a Telescope
-picker. You can then decide to actually open the note or just read the content
+By default, following a note link opens a Telescope picker. You can then
+decide to open the note or just read the content
 from the picker itself. Thanks to [Telescope actions](#picker-actions) you can
 also just insert a link to the note or yank a link instead of opening the note.
 
@@ -233,7 +233,11 @@ The following sub-commands are defined:
 - `find_daily_notes` : Find daily notes by title (date).
 - `search_notes` : Search (grep) in all notes
 - `insert_link` : Insert a link to a note
-- `follow_link` : Follow the link under the cursor
+- `follow_link` : Preview the note linked under the cursor. Set
+  `follow_link_auto_open = true` to open a unique match directly.
+  `[[./one/twin]]` names a path from the vault root. A bare `[[twin]]` with
+  multiple matches opens a picker. For daily and other periodic navigation,
+  use `journal_auto_open`.
 - `goto_today` : Open today's daily note.
 - `new_note` : Create a new note, prompts for title
 - `goto_thisweek` : Open this week's weekly note.
@@ -342,11 +346,6 @@ switch between them easily. Simply add data to the `vaults` table in the
     configuration and configure each vault as you wish.
 
 ### Link notation
-
-Set `follow_link_auto_open = true` to open an ordinary note link directly
-when its target is unique. Duplicate titles still open a picker. Missing
-targets follow `follow_creates_nonexisting` and your template settings.
-Periodic navigation has its own option, `journal_auto_open`.
 
 The following links are supported:
 

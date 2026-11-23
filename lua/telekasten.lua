@@ -929,11 +929,17 @@ local function FollowLink(opts)
                         tkpickers.picker_actions.post_open()
                         return
                     end
+                    local candidates = pinfo.matches
+                    if vim.startswith(title, "./") then
+                        candidates = fileutils.file_exists(pinfo.filepath)
+                                and { pinfo.filepath }
+                            or {}
+                    end
                     fileutils.find_files_sorted({
                         prompt_title = "Follow link to note...",
-                        files = pinfo.matches,
+                        files = candidates,
                         cwd = pinfo.root_dir,
-                        default_text = title,
+                        default_text = candidates and "" or title,
                         find_command = config.options.find_command,
                         attach_mappings = tkpickers.apply_picker_mappings(opts),
                         sort = config.options.sort,
