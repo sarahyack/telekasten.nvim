@@ -343,6 +343,10 @@ switch between them easily. Simply add data to the `vaults` table in the
 
 ### Link notation
 
+When creating a note, the path you enter identifies the new note. For example,
+`bar` and `foo/bar` can coexist in the vault. An existing note at the requested
+path keeps its contents.
+
 The following links are supported:
 
 ```markdown
