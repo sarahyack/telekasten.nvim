@@ -124,6 +124,10 @@ telekasten.setup({opts})
       -- instead of a [[title only]] link
       subdirs_in_links = true,
 
+      -- Optional list of commands to display in the panel. Direct commands
+      -- and their completion always remain available.
+      -- panel_commands = { "find_notes", "new_note", "switch_vault" },
+
       -- Command palette theme: dropdown (window) or ivy (bottom panel)
       command_palette_theme = "ivy",
 

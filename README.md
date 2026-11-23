@@ -269,6 +269,10 @@ the different commands available. This feature is quite similar to the excellent
 [which-key.nvim](https://github.com/folke/which-key.nvim) plugin, although
 limited to Telekasten.
 
+Set `panel_commands` in a vault to list the commands you want to see, for
+example `panel_commands = { "find_notes", "new_note", "switch_vault" }`.
+Omit the list for the full panel. All commands remain available directly.
+
 You can call this panel using
 
 ```vim
