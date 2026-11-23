@@ -368,6 +368,9 @@ function M.check_dir_and_ask(dir, purpose, callback)
                     vim.cmd('echomsg " "')
                     vim.cmd('echomsg "' .. dir .. ' created"')
                     ret = true
+                    if callback then
+                        callback(true)
+                    end
                 else
                     -- unreachable: plenary.Path:mkdir() will error out
                     tkutils.print_error("Could not create directory " .. dir)
