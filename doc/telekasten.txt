@@ -1391,8 +1391,11 @@ Note:~
 --------------------------------------------------------------------------------
 Section 3.5: Picker mappings                      *telekasten.picker_mappings*
 
-When you are prompted with a telescope picker to select a note or media file,
-the following default mappings apply:
+Use the picker mappings to open a note or media file, insert its link, or yank
+the link. Press `?` in Telescope's normal mode to see the configured keys.
+Telescope versions that support descriptions also show the action names.
+
+The default mappings are:
 
   <CTRL> + <i>
     Inserts a link to the selected note / image.
