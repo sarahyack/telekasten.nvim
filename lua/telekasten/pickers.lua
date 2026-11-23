@@ -4,6 +4,7 @@ local action_state = require("telescope.actions.state")
 local conf = require("telescope.config").values
 local finders = require("telescope.finders")
 local pickers = require("telescope.pickers")
+local Path = require("plenary.path")
 local config = require("telekasten.config")
 local fileutils = require("telekasten.utils.files")
 local linkutils = require("telekasten.utils.links")
@@ -123,25 +124,52 @@ function M.picker_actions.yank_tag(opts)
     end
 end
 
---- picker_actions.paste_link(opts)
--- Returns a configured function that gets mapped to a keyt while using the picker
--- @param opts table Options, ideally including subdirs_in_links and insert_after_inserting
--- @return function Closes the buffer and pastes the chosen link
-function M.picker_actions.paste_link(opts)
+-- Telescope's grep entries expose their absolute file in path.
+local function entry_path(entry)
+    local path = entry.path or entry.filename or entry.value
+    if not Path:new(path):is_absolute() then
+        return Path:new(entry.cwd or config.options.home, path):absolute()
+    end
+    return path
+end
+
+--- Insert a link for the selected note. Enter can also link the typed title.
+---@param opts table Picker options
+---@param as_default_action? boolean Use the insert_link default action
+function M.picker_actions.paste_link(opts, as_default_action)
     opts = opts or {}
-    opts.subdirs_in_links = opts.subdirs_in_links
-        or config.options.subdirs_in_links
     return function(prompt_bufnr)
-        actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
+        if not selection and as_default_action then
+            local title = action_state.get_current_line()
+            if title ~= "" then
+                selection = { filename = title }
+            end
+        end
+        if not selection then
+            return
+        end
+        local path = entry_path(selection)
         local pinfo = fileutils.Pinfo:new({
-            filepath = selection.filename or selection.value,
-            opts,
+            filepath = path,
+            subdirs_in_links = opts.subdirs_in_links,
         })
-        local title = "[[" .. pinfo.title .. "]]"
-        vim.api.nvim_put({ title }, "", true, true)
-        if opts.insert_after_inserting or opts.i then
-            vim.api.nvim_feedkeys("A", "m", false)
+        local title = pinfo.title
+        local alias = opts.with_alias and linkutils.note_alias(path)
+        if alias then
+            title = title .. "|" .. alias
+        end
+        actions.close(prompt_bufnr)
+        vim.api.nvim_put(
+            { "[[" .. title .. "]]" },
+            "",
+            not as_default_action,
+            true
+        )
+        if
+            opts.i or (not as_default_action and opts.insert_after_inserting)
+        then
+            vim.api.nvim_feedkeys(as_default_action and "a" or "A", "m", false)
         end
     end
 end

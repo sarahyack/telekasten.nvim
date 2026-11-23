@@ -201,10 +201,17 @@ function M.note_alias(path)
                 then
                     fence = nil
                 end
-            elseif comment then
-                comment = not line:find("-->", 1, true)
-            elseif line:match("^%s*<!%-%-") then
-                comment = not line:find("-->", 1, true)
+            elseif comment or line:match("^%s*<!%-%-") then
+                local pos = 1
+                while true do
+                    local _, last =
+                        line:find(comment and "-->" or "<!--", pos, true)
+                    if not last then
+                        break
+                    end
+                    comment = not comment
+                    pos = last + 1
+                end
             elseif marker then
                 fence = marker
             else

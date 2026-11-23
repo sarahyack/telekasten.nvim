@@ -376,6 +376,15 @@ these can be previewed.
 See the documentation for more details regarding the different types of links
 (`:h telekasten.link_notation`).
 
+#### Note aliases
+
+A note link can display a readable title while pointing to a UUID, for
+example `[[201705061300|Project title]]`. To insert one, call
+`require("telekasten").insert_link({ with_alias = true })`. Telekasten uses
+the single-line YAML `alias:` field or the first level-one heading. With no
+usable title it inserts the target alone. The option works with filename
+search and with `with_live_grep = true`.
+
 #### External File Linking
 
 Telekasten supports linking to files outside the current vault using absolute paths. This feature is enabled by default and allows you to reference notes across different vaults or directories.
@@ -401,11 +410,6 @@ Cross-reference: [[/absolute/path/to/note]]
 ```
 
 When you use picker actions (`<C-i>` to insert link), files outside the current vault will automatically be formatted with absolute paths using `~/` when possible.
-
-To label a link to a UUID-named note, use
-`require("telekasten").insert_link({ with_alias = true, with_live_grep = true })`.
-The alias comes from a single-line `alias:` in YAML frontmatter or the first
-level-one heading. If neither is usable, Telekasten inserts the target alone.
 
 ### Tag notation
 
