@@ -148,6 +148,12 @@ require('telekasten').setup({
 })
 ```
 
+Set `extension = { ".md", ".qmd" }` in a vault to use both file types. New
+notes use the first extension unless you type another configured suffix.
+For example, creating `Report.qmd` inserts no extra `.md`. If both `Report.md`
+and `Report.qmd` exist, following `[[Report]]` shows both and renaming either
+leaves that bare link alone. New links distinguish the two filenames.
+
 **NOTE:** For Windows users, please indicate the path as
 `C:/Users/username/zettelkasten/`. See `:h telekasten.windows` for more details
 about the specificities for Windows.

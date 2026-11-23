@@ -1,3 +1,4 @@
+local extensions = require("telekasten.extensions")
 local M = {}
 package.loaded[...] = M
 
@@ -44,7 +45,7 @@ end
 -- Strips an extension from a file name, escaping "." properly, eg:
 -- strip_extension("path/Filename.md", ".md") -> "path/Filename"
 local function strip_extension(str, ext)
-    return str:gsub("(" .. ext:gsub("%.", "%%.") .. ")$", "")
+    return vim.endswith(str, ext) and str:sub(1, -#ext - 1) or str
 end
 
 --- assemble_roots_specs(opts)
@@ -138,7 +139,9 @@ function M.prompt_title(ext, defaultFile, callback, cwd)
             vim.cmd("echomsg 'Note creation cancelled!'")
             vim.cmd("echohl None")
         else
-            title = strip_extension(title, ext)
+            if not config.options.note_extensions then
+                title = strip_extension(title, ext)
+            end
             callback(title)
         end
     end)
@@ -267,7 +270,7 @@ local function filter_filetypes(flist, ftypes)
     end
 
     for _, fn in pairs(flist) do
-        if ftypeok[M.get_extension(fn)] then
+        if ftypeok[M.get_extension(fn)] or ftypeok[extensions.suffix(fn)] then
             table.insert(new_fl, fn)
         end
     end
@@ -423,6 +426,10 @@ end
 -- @param title string Title of the new note
 -- @return string Complete file name with appropriate UUID if needed
 function M.generate_note_filename(uuid, title)
+    local ext = extensions.suffix(title) or ""
+    if ext ~= "" then
+        title = title:sub(1, -#ext - 1)
+    end
     if config.options.filename_space_subst ~= nil then
         title = title:gsub(" ", config.options.filename_space_subst)
     end
@@ -435,14 +442,14 @@ function M.generate_note_filename(uuid, title)
     local sep = config.options.uuid_sep or "-"
     if config.options.new_note_filename ~= "uuid" and #title > 0 then
         if config.options.new_note_filename == "uuid-title" then
-            return subdir .. uuid .. sep .. filename
+            return subdir .. uuid .. sep .. filename .. ext
         elseif config.options.new_note_filename == "title-uuid" then
-            return title .. sep .. uuid
+            return title .. sep .. uuid .. ext
         else
-            return title
+            return title .. ext
         end
     else
-        return uuid
+        return uuid .. ext
     end
 end
 
@@ -540,7 +547,8 @@ function M.Pinfo:resolve_path(p, opts)
     local pp = Path:new(p)
     local p_splits = pp:_split()
     self.filename = p_splits[#p_splits]
-    self.title = self.filename:gsub(config.options.extension, "")
+    local ext = extensions.suffix(self.filename) or config.options.extension
+    self.title = strip_extension(self.filename, ext)
 
     if vim.startswith(p, config.options.home) then
         self.root_dir = config.options.home
@@ -593,6 +601,11 @@ function M.Pinfo:resolve_path(p, opts)
         self.title = self.sub_dir .. "/" .. self.title
     end
 
+    if config.options.note_extensions then
+        self.title =
+            extensions.link_title(self.title, ext, extensions.index(), p)
+    end
+
     return self
 end
 
@@ -619,6 +632,13 @@ function M.Pinfo:resolve_link(title, opts)
         or {
             normal = config.options.template_new_note,
         }
+
+    local requested_title = title
+    local ext = extensions.suffix(title)
+    if ext then
+        opts.extension = ext
+        title = title:sub(1, -#ext - 1)
+    end
 
     -- Set basic Pinfo values
     self.fexists = false
@@ -654,7 +674,18 @@ function M.Pinfo:resolve_link(title, opts)
         kind = "yearly"
     end
 
-    if not opts.for_creation and kind ~= nil then
+    if config.options.note_extensions and not opts.for_creation then
+        local matches = extensions.index()[requested_title]
+        if matches and #matches > 0 then
+            self.matches = matches
+            self.ambiguous = #matches > 1
+            self.filepath = matches[1]
+            self.filename = vim.fn.fnamemodify(self.filepath, ":t")
+            self.fexists = true
+        end
+    end
+
+    if not self.matches and not opts.for_creation and kind ~= nil then
         local path, _, root_dir, _ =
             periodic.build_path(opts.periodic, kind, dinfo, opts.extension)
 
@@ -666,7 +697,8 @@ function M.Pinfo:resolve_link(title, opts)
     end
 
     if
-        not opts.for_creation
+        not self.matches
+        and not opts.for_creation
         and M.file_exists(opts.home .. "/" .. self.filename)
     then
         self.filepath = opts.home .. "/" .. self.filename
@@ -801,7 +833,7 @@ function M.find_files_sorted(opts)
     local search_depth = opts.search_depth or nil
     local scan_opts = { search_pattern = search_pattern, depth = search_depth }
 
-    local file_list = scan.scan_dir(opts.cwd, scan_opts)
+    local file_list = opts.files or scan.scan_dir(opts.cwd, scan_opts)
     local filter_extensions = opts.filter_extensions
         or config.options.filter_extensions
     file_list = filter_filetypes(file_list, filter_extensions)

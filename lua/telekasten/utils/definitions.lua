@@ -49,7 +49,7 @@
 ---@field periodic PeriodicConfig
 ---@field templates string
 ---@field image_subdir string|nil Should be deprecated gracefully and replaced by "images"
----@field extension "md" | string
+---@field extension string|string[]
 ---@field new_note_filename "title" | "uuid" | "uuid-title"
 ---@field uuid_type "%Y%m%d%H%M" | string
 ---@field uuid_sep "-" | string

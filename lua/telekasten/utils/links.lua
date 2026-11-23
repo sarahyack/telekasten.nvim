@@ -1,3 +1,4 @@
+local extensions = require("telekasten.extensions")
 local M = {}
 package.loaded[...] = M
 
@@ -69,16 +70,21 @@ M.generate_backlink_map = function(opts)
     assert(opts.home ~= nil, "Error: need home dir in opts!")
 
     -- async seems to have lost await and we don't want to enter callback hell, hence we go sync here
-    local subdir_list = scan.scan_dir(opts.home, { only_dirs = true })
-    local file_list = {}
-    -- transform the file list
-    local _x = scan.scan_dir(opts.home, {
-        search_pattern = function(entry)
-            return entry:sub(-#opts.extension) == opts.extension
-        end,
-    })
-    for _, v in pairs(_x) do
-        file_list[v] = true
+    local subdir_list, file_list, targets
+    if config.options.note_extensions then
+        targets, file_list = extensions.index()
+    else
+        subdir_list = scan.scan_dir(opts.home, { only_dirs = true })
+        file_list = {}
+        -- transform the file list
+        local _x = scan.scan_dir(opts.home, {
+            search_pattern = function(entry)
+                return entry:sub(-#opts.extension) == opts.extension
+            end,
+        })
+        for _, v in pairs(_x) do
+            file_list[v] = true
+        end
     end
 
     -- now process all the notes
@@ -97,8 +103,16 @@ M.generate_backlink_map = function(opts)
                 link_counts[note_fn] = link_counts[note_fn] + 1
 
                 -- and: inc the backlinks of the linked note
-                local fexists, backlinked_file =
-                    resolve_link(linktitle, file_list, subdir_list, opts)
+                local fexists, backlinked_file
+                if targets then
+                    local matches = targets[M.remove_alias(linktitle)]
+                    if matches and #matches == 1 then
+                        fexists, backlinked_file = true, matches[1]
+                    end
+                else
+                    fexists, backlinked_file =
+                        resolve_link(linktitle, file_list, subdir_list, opts)
+                end
                 -- print(
                 --     "note for link `"
                 --         .. linktitle
