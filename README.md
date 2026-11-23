@@ -13,9 +13,6 @@ based on [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
 
 #### Highlights
 
-On Neovim 0.9 and newer, Telekasten notes use the Markdown Tree-sitter parser
-when it is installed. The buffer filetype stays `telekasten`.
-
 - Find notes by name, #tag or by searching within note text
 - Find daily, weekly, monthly, quarterly, and yearly notes by date
 - **Vaults**: Support for multiple separate note collections
@@ -180,6 +177,13 @@ pick the correct illustrations for your note.
 
 _Image pasting is supported by default on MacOS, it is not necessary to install
 any other tool._
+
+#### Markdown Tree-sitter parser
+
+On Neovim 0.9 and newer, installing a Markdown parser lets Tree-sitter parse
+Telekasten notes while their filetype stays `telekasten`. If you have a native
+Telekasten parser or already mapped the filetype to another language,
+Telekasten respects that choice.
 
 #### Other useful resources/plugins
 
