@@ -456,7 +456,8 @@ the following mappings apply:
 When invoking `show_calendar()`, a calendar showing the previous, current, and
 next month is shown at the right side of vim.
 
-- days that have a daily note associated with them are marked with a + sign and
+- when daily notes are enabled in this vault, days with a daily note at the
+  configured path are marked with a + sign and
   a different color
 - pressing enter on a day will open up a telescope finder with the associated
   daily note selected and previewed. The daily note will be created if it
