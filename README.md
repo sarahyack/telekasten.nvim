@@ -225,17 +225,16 @@ custom mappings.
 
 ### Commands
 
-To omit Logseq backups from the name and content searches in a vault, set
-`search_ignore_patterns = { "logseq/bak/" }` in its configuration. The entries
-are Lua patterns and supplement Telescope’s global `file_ignore_patterns`.
-
 The following sub-commands are defined:
 
 - `panel` : brings up the [command palette](#command-palette)
 - `find_notes` : Find notes by title (filename)
 - `show_tags` : brings up the tag list. From there you can select a tag to search for tagged notes - or yank or insert the tag
 - `find_daily_notes` : Find daily notes by title (date).
-- `search_notes` : Search (grep) in all notes
+- `search_notes` : Search the text of your notes. To skip a directory in this
+  search and in both `find_notes` modes, set a Lua path pattern in the vault
+  configuration. For example, `search_ignore_patterns = { "logseq/bak/" }`
+  hides Logseq backups alongside the exclusions already configured in Telescope.
 - `insert_link` : Insert a link to a note
 - `follow_link` : Follow the link under the cursor
 - `goto_today` : Open today's daily note.
