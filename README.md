@@ -459,10 +459,9 @@ next month is shown at the right side of vim.
 - when daily notes are enabled in this vault, days with a daily note at the
   configured path are marked with a + sign and
   a different color
-- pressing enter on a day will open up a telescope finder with the associated
-  daily note selected and previewed. The daily note will be created if it
-  doesn't exist. If you choose to not open the note, you will return to the
-  calender so you can preview other notes.
+- press Enter on a day to open its daily note. With the default settings,
+  Telescope previews the note first. Telekasten can create a missing note
+  when daily notes and their `create_if_missing` setting are enabled.
 
 If you want to see a big calendar showing the current month that fills your
 entire window, you can issue the following command in vim:
