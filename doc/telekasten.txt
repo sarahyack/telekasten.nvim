@@ -530,6 +530,14 @@ telekasten.setup({opts})
 
         Default: `telescope-media-files`
 
+                                  *telekasten.settings.search_ignore_patterns*
+    search_ignore_patterns: ~
+        Lua path patterns to skip when searching this vault by name or
+        contents. These extend Telescope's file exclusions. For example, to
+        keep Logseq backups out of |telekasten.search_notes()|: >
+            search_ignore_patterns = { "logseq/bak/" },
+<
+
                                     *telekasten.settings.follow_url_fallback*
     follow_url_fallback: ~
         A customizable fallback handler for urls.
@@ -928,6 +936,9 @@ telekasten.goto_thisyear() ~
 telekasten.search_notes() ~
   Search through all notes via Telescope live grep, initialized with the word
   under the cursor.
+
+  See |telekasten.settings.search_ignore_patterns| to skip directories in
+  this search and in both modes of |telekasten.find_notes()|.
 
                                                    *telekasten.insert_link()*
 telekasten.insert_link({opts}) ~
