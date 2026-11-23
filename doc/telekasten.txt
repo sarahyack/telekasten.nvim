@@ -596,8 +596,8 @@ telekasten.setup({opts})
         - 'quarterly'
         - 'yearly'
 
-        The list of available options for each kind are the same, so for
-        convenience sake, only the kind options are listed here:
+        All five kinds share the following options. Daily notes also accept
+        |telekasten.periodic.kinds.daily.days_off|.
 
         - `enabled`: 
             - see |telekasten.periodic.kinds.enabled|
@@ -614,6 +614,14 @@ telekasten.setup({opts})
 
         For further usage information: ~
             - see |telekasten.periodic_usage|
+
+                                    *telekasten.periodic.kinds.daily.days_off*
+    days_off (daily only): ~
+        Weekdays skipped by `{{prevworkday}}` and `{{nextworkday}}`. Sunday
+        is 1 and Saturday is 7. The default { 1, 7 } gives a Monday-to-Friday
+        workweek. Use {} for every day or leave at least one day enabled.
+        The calendar also applies to `goto_periodic({}, "nextworkday")` and
+        `goto_periodic({}, "prevworkday")`, even if a note exists on a day off.
 
                                     *telekasten.periodic.kinds.enabled*
         enabled: ~
@@ -872,9 +880,6 @@ telekasten.goto_periodic() ~
   `dateutils.calculate_dates()` (e.g. `date`, `prevday`, `isoweek`, `month_ym`,
   `quarter_yq`, `year`). A list of available date_refs is listed under the
   template_files section, link below.
-
-  Use `goto_periodic({}, "prevworkday")` or `goto_periodic({}, "nextworkday")`
-  to move by the configured work calendar, including when an off-day note exists.
 
   If the specified periodic note is not present, it will be created if
   the respective kind's `create_if_missing` setting is set to `true`.
