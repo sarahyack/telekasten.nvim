@@ -583,8 +583,11 @@ local function InsertImgLink(opts)
             attach_mappings = tkpickers.apply_picker_mappings(
                 opts,
                 function(prompt_bufnr, _)
-                    actions.close(prompt_bufnr)
                     local selection = action_state.get_selected_entry()
+                    if not selection then
+                        return
+                    end
+                    actions.close(prompt_bufnr)
                     local fn = selection.value
                     fn = linkutils.make_relative_path(
                         vim.fn.expand("%:p"),
@@ -705,9 +708,12 @@ local function on_create_with_template(opts, title)
         attach_mappings = tkpickers.apply_picker_mappings(
             opts,
             function(prompt_bufnr, _)
+                local selection = action_state.get_selected_entry()
+                if not selection then
+                    return
+                end
                 actions.close(prompt_bufnr)
-                -- local template = M.Cfg.templates .. "/" .. action_state.get_selected_entry().value
-                local template = action_state.get_selected_entry().value
+                local template = selection.value
                 -- TODO: pass in the calendar_info returned from the pinfo
                 fileutils.create_note_from_template(
                     title,
