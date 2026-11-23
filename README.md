@@ -67,6 +67,7 @@ also just insert a link to the note or yank a link instead of opening the note.
   - [Highlights](#highlights)
   - [Mappings](#mappings)
 - [Features](#features)
+  - [Vaults](#vaults)
   - [Link notation](#link-notation)
   - [Tag notation](#tag-notation)
   - [Templates](#templates)
