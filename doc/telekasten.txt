@@ -552,13 +552,15 @@ telekasten.setup({opts})
 
                                             *telekasten.periodic.enabled*
     enabled: ~
-        The command panel shows find and goto commands for enabled kinds.
         Flag that manages the availability of the periodic notes functionality.
         If set to `false`, no periodic style notes will be created for this
         vault, and any searching/detection functionality for these notes will
         be deactivated. If periodic notes are or have been created manually,
         they will not be tracked, or available in their corresponding telescope
         pickers.
+
+        The panel lists Find and GoTo only for enabled kinds in the active
+        vault. A disabled kind stays hidden when you open that vault's panel.
 
         Default: `true`
 

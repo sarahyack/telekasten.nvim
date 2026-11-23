@@ -225,9 +225,6 @@ custom mappings.
 
 ### Commands
 
-The panel shows periodic find and goto commands for the kinds enabled in the
-active vault. Switching vaults updates the list the next time you open it.
-
 The following sub-commands are defined:
 
 - `panel` : brings up the [command palette](#command-palette)
@@ -271,6 +268,10 @@ Telekasten comes with a small helper command palette that let the user browse
 the different commands available. This feature is quite similar to the excellent
 [which-key.nvim](https://github.com/folke/which-key.nvim) plugin, although
 limited to Telekasten.
+
+Periodic Find and GoTo commands appear only for kinds enabled in the active
+vault. A disabled kind stays hidden even if its command is on a custom panel
+list. Reopen the panel after switching vaults to see the new selection.
 
 You can call this panel using
 
