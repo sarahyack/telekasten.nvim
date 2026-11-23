@@ -225,6 +225,9 @@ custom mappings.
 
 ### Commands
 
+The panel shows periodic find and goto commands for the kinds enabled in the
+active vault. Switching vaults updates the list the next time you open it.
+
 The following sub-commands are defined:
 
 - `panel` : brings up the [command palette](#command-palette)
