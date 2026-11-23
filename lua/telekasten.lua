@@ -1957,9 +1957,8 @@ end
 local function _setup(cfg)
     -- Vault homes are relative to the directory where setup was called.
     local function resolve_home(vault)
-        local home = Path
-            :new(vim.fn.fnamemodify(vault.home or "~/zettelkasten", ":p"))
-            :absolute()
+        local home = vault.home or "~/zettelkasten"
+        home = vim.fn.simplify(vim.fn.fnamemodify(home .. "/.", ":p:h"))
         return vim.tbl_extend("force", vault, { home = home })
     end
     if cfg.vaults then
