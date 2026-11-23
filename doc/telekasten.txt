@@ -1420,6 +1420,10 @@ to launch a picker to choose the vaults.
 ================================================================================
 Section 4: Suggested Mappings                              *telekasten.mappings*
 
+Set `g:markdown_folding` to 1 to enable heading folds in Telekasten notes.
+Use `zc` and `zo` to close and open a heading. With the option off, your
+usual fold method applies.
+
 Telekasten.nvim does not come with pre-defined mappings.
 
 However, here are some suggestions:

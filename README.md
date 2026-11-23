@@ -303,6 +303,9 @@ hi tkBrackets ctermfg=gray guifg=gray
 
 ### Mappings
 
+Set `vim.g.markdown_folding = 1` to fold headings in Telekasten notes with
+`zc` and `zo`. With the option off, Neovim keeps your usual fold method.
+
 The real power of Telekasten lays in defining sensible mappings to make your
 workflow even smoother. A good idea is to take advantage of the [command
 palette][#command-palette] and start all your mappings with the same prefix
