@@ -438,11 +438,20 @@ local function FindNotes(opts)
         local find_command = config.options.find_command
         local sort = config.options.sort
         local picker_actions = tkpickers.picker_actions
-        local attach_mappings = function(_, map)
-            tkpickers.apply_picker_mappings(opts)
+        local attach_mappings = function(prompt_bufnr, map)
+            tkpickers.apply_picker_mappings(opts)(prompt_bufnr, map)
             if config.options.enable_create_new then
-                map("i", "<c-n>", picker_actions.create_new(opts))
-                map("n", "<c-n>", picker_actions.create_new(opts))
+                local mapping_opts = vim.fn.has("nvim-0.7") == 1
+                        and { desc = "Create note" }
+                    or nil
+                for _, mode in ipairs({ "i", "n" }) do
+                    map(
+                        mode,
+                        "<c-n>",
+                        picker_actions.create_new(opts),
+                        mapping_opts
+                    )
+                end
             end
             return true
         end

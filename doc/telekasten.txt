@@ -1399,6 +1399,9 @@ the following default mappings apply:
     The option `insert_after_inserting` defines if insert mode will be entered
     after the link is pasted into your current buffer.
 
+  In Telescope versions that support mapping descriptions, press `?` in normal
+  mode to see the action names next to your configured keys.
+
   <CTRL> + <y>
     Yanks a link to the selected note / image, ready for <p>asting.
     The option `close_after_yanking` defines whether the telescope window should

@@ -438,7 +438,9 @@ telekasten.template_files`).
 ### Picker actions
 
 When you are prompted with a telescope picker to select a note or media file,
-the following mappings apply:
+the following mappings apply. In Telescope versions that support mapping
+descriptions, open picker help with `?` in normal mode to see the actions
+alongside your configured keys:
 
 - <kbd>CTRL</kbd> + <kbd>i</kbd> : inserts a link to the selected note / image
   - the option `insert_after_inserting` defines if insert mode will be entered
