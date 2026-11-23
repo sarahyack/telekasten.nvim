@@ -269,10 +269,6 @@ the different commands available. This feature is quite similar to the excellent
 [which-key.nvim](https://github.com/folke/which-key.nvim) plugin, although
 limited to Telekasten.
 
-Set `panel_commands` in a vault to list the commands you want to see, for
-example `panel_commands = { "find_notes", "new_note", "switch_vault" }`.
-Omit the list for the full panel. All commands remain available directly.
-
 You can call this panel using
 
 ```vim
@@ -282,6 +278,11 @@ You can call this panel using
 This can be especially useful if all your Telekasten mappings start with the
 same prefix. In that case, bind the command panel to the prefix only and it will
 pop-up when you hesitate to complete the mapping.
+
+Set `panel_commands` in a vault to choose which of its available commands
+appear in the panel. For example, `{ "find_notes", "new_note", "switch_vault" }`
+keeps the panel focused on those three commands. An empty list hides every
+entry. You can still run any command directly or find it with completion.
 
 ## Customization
 
