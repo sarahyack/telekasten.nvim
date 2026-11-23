@@ -41,6 +41,7 @@ CONTENTS
         3.5 Calendar ....................... |telekasten.calendar|
         3.6 Picker mappings ................ |telekasten.picker_mappings|
         3.7 Multiple home directories....... |telekasten.switch_vaults|
+        3.8 Heading folds .................. |telekasten.heading_folds|
     4. Suggested mappings .................. |telekasten.mappings|
     5. FAQ ................................. |telekasten.faq|
         5.1 Windows ........................ |telekasten.windows|
@@ -1417,12 +1418,15 @@ for each vault is stored as a map in telekasten. You can use `switch_vaults
 to launch a picker to choose the vaults.
 
 
+--------------------------------------------------------------------------------
+Section 3.8: Heading folds                              *telekasten.heading_folds*
+
+Telekasten notes support Markdown heading folds. Set `g:markdown_folding` to
+1 to enable them, then use |zc| and |zo| to close or open a section. With
+heading folding off, the window keeps its usual fold method.
+
 ================================================================================
 Section 4: Suggested Mappings                              *telekasten.mappings*
-
-Set `g:markdown_folding` to 1 to enable heading folds in Telekasten notes.
-Use `zc` and `zo` to close and open a heading. With the option off, your
-usual fold method applies.
 
 Telekasten.nvim does not come with pre-defined mappings.
 

@@ -65,6 +65,7 @@ also just insert a link to the note or yank a link instead of opening the note.
   - [Command palette](#command-palette)
 - [Customization](#customization)
   - [Highlights](#highlights)
+  - [Heading folds](#heading-folds)
   - [Mappings](#mappings)
 - [Features](#features)
   - [Link notation](#link-notation)
@@ -301,10 +302,13 @@ hi tkLink ctermfg=Blue cterm=bold,underline guifg=blue gui=bold,underline
 hi tkBrackets ctermfg=gray guifg=gray
 ```
 
-### Mappings
+### Heading folds
 
-Set `vim.g.markdown_folding = 1` to fold headings in Telekasten notes with
-`zc` and `zo`. With the option off, Neovim keeps your usual fold method.
+Telekasten notes use Markdown’s heading folds when `vim.g.markdown_folding = 1`.
+Use `zc` to close the section under the cursor and `zo` to open it. With
+heading folding off, the window keeps its usual fold method.
+
+### Mappings
 
 The real power of Telekasten lays in defining sensible mappings to make your
 workflow even smoother. A good idea is to take advantage of the [command
