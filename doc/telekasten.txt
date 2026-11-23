@@ -1409,6 +1409,12 @@ the following default mappings apply:
     function. E.g. `insert_img_link()`'s action is to insert a link to the
     selected image.
 
+In the vault picker, Enter switches vaults. To also change the global
+working directory to the selected vault home, map `switch_vault_cd` in the
+active vault. The key works in insert and normal mode and is unset by default: >
+    keybinds = { picker = { switch_vault_cd = "<M-CR>" } }
+<
+
 --------------------------------------------------------------------------------
 Section 3.6 Multiple home directories               *telekasten.switch_vaults*
 

@@ -451,6 +451,10 @@ the following mappings apply:
   action defined by the called function
   - e.g. `insert_img_link()`'s action is to insert a link to the selected image.
 
+In the vault picker, Enter activates the selected vault. To also change Neovim’s
+global working directory, give that action a key in the vault configuration,
+for example `keybinds = { picker = { switch_vault_cd = "<M-CR>" } }`.
+
 ### Calendar
 
 When invoking `show_calendar()`, a calendar showing the previous, current, and
