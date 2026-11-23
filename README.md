@@ -402,6 +402,11 @@ Cross-reference: [[/absolute/path/to/note]]
 
 When you use picker actions (`<C-i>` to insert link), files outside the current vault will automatically be formatted with absolute paths using `~/` when possible.
 
+To label a link to a UUID-named note, use
+`require("telekasten").insert_link({ with_alias = true, with_live_grep = true })`.
+The alias comes from a single-line `alias:` in YAML frontmatter or the first
+level-one heading. If neither is usable, Telekasten inserts the target alone.
+
 ### Tag notation
 
 Telekasten supports the following tag notations:

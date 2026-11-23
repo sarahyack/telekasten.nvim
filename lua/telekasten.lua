@@ -194,16 +194,22 @@ local function InsertLink(opts)
                 if selection == nil then
                     selection = { filename = action_state.get_current_line() }
                 end
+                local path = selection.path
+                    or selection.filename
+                    or selection.value
+                if not Path:new(path):is_absolute() then
+                    path = Path:new(cwd, path):absolute()
+                end
                 local pinfo = fileutils.Pinfo:new({
-                    filepath = selection.filename or selection.value,
-                    opts,
+                    filepath = path,
+                    subdirs_in_links = opts.subdirs_in_links,
                 })
-                vim.api.nvim_put(
-                    { "[[" .. pinfo.title .. "]]" },
-                    "",
-                    false,
-                    true
-                )
+                local title = pinfo.title
+                local alias = opts.with_alias and linkutils.note_alias(path)
+                if alias then
+                    title = title .. "|" .. alias
+                end
+                vim.api.nvim_put({ "[[" .. title .. "]]" }, "", false, true)
                 if opts.i then
                     vim.api.nvim_feedkeys("a", "m", false)
                 end

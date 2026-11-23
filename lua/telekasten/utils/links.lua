@@ -128,6 +128,102 @@ M.generate_backlink_map = function(opts)
     return ret
 end
 
+-- Read a single-line frontmatter alias or the first level-one heading.
+function M.note_alias(path)
+    local lines
+    for _, buf in ipairs(vim.api.nvim_list_bufs()) do
+        if
+            vim.api.nvim_buf_is_loaded(buf)
+            and vim.api.nvim_buf_get_name(buf) == path
+        then
+            lines = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+            break
+        end
+    end
+    if not lines then
+        if vim.fn.filereadable(path) == 0 then
+            return nil
+        end
+        lines = vim.fn.readfile(path)
+    end
+
+    local frontmatter = false
+    if lines[1] and lines[1]:match("^%-%-%-%s*$") then
+        for i = 2, #lines do
+            if
+                lines[i]:match("^%-%-%-%s*$") or lines[i]:match("^%.%.%.%s*$")
+            then
+                frontmatter = true
+                break
+            end
+        end
+    end
+    local fence, comment
+    for i, line in ipairs(lines) do
+        local alias
+        if frontmatter then
+            if
+                i > 1
+                and (line:match("^%-%-%-%s*$") or line:match("^%.%.%.%s*$"))
+            then
+                frontmatter = false
+            else
+                local value = line:match("^alias:%s+(.+)")
+                if value then
+                    local quoted = value:match("^'(.-)'%s*$")
+                        or value:match("^'(.-)'%s+#")
+                    if quoted then
+                        alias = quoted:gsub("''", "'")
+                    elseif value:sub(1, 1) == '"' then
+                        local literal = value:match('^(".*")%s*$')
+                            or value:match('^(".*")%s+#')
+                        local ok, decoded =
+                            pcall(vim.fn.json_decode, literal or "")
+                        if ok and type(decoded) == "string" then
+                            alias = decoded
+                        end
+                    elseif not value:match("^[%[%]{}/>!&*|#]") then
+                        local scalar = vim.trim((value:gsub("%s+#.*$", "")))
+                        if scalar ~= "~" and scalar:lower() ~= "null" then
+                            alias = scalar
+                        end
+                    end
+                end
+            end
+        else
+            local marker = line:match("^ ? ? ?(```+)")
+            marker = marker or line:match("^ ? ? ?(~~~+)")
+            if fence then
+                if
+                    marker
+                    and marker:sub(1, #fence) == fence
+                    and line:match("^%s*[%s`~]+$")
+                then
+                    fence = nil
+                end
+            elseif comment then
+                comment = not line:find("-->", 1, true)
+            elseif line:match("^%s*<!%-%-") then
+                comment = not line:find("-->", 1, true)
+            elseif marker then
+                fence = marker
+            else
+                alias = line:match("^ ? ? ?#%s+(.+)")
+                if alias then
+                    alias = alias:gsub("%s+#+%s*$", "")
+                end
+            end
+        end
+
+        if alias then
+            alias = vim.trim(alias)
+            if alias ~= "" and not alias:find("[|%]\r\n]") then
+                return alias
+            end
+        end
+    end
+end
+
 -- Remove alias in links to get only link part
 -- [[my_cool_link | My Alias]] -> "my_cool_link"
 --

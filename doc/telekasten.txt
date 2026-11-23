@@ -943,6 +943,12 @@ telekasten.insert_link({opts}) ~
 
     Default: `nil`
 
+  with_alias: ~
+    Set to true to insert `[[target|alias]]`. Telekasten reads a single-line
+    `alias:` from YAML frontmatter, then tries the first level-one Markdown
+    heading. Without a usable title the link contains only the target.
+    This also works with `with_live_grep`. Default: `false`.
+
   with_live_grep: ~
     If `true`, it will use live_grep picker and you can search file by file contents.
 
