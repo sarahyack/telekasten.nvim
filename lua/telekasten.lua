@@ -922,7 +922,7 @@ local function FollowLink(opts)
                 local function picker()
                     if
                         direct
-                        and not pinfo.matches
+                        and (not pinfo.matches or #pinfo.matches == 1)
                         and fileutils.file_exists(pinfo.filepath)
                     then
                         vim.cmd("edit " .. vim.fn.fnameescape(pinfo.filepath))
