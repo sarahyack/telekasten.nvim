@@ -343,6 +343,11 @@ switch between them easily. Simply add data to the `vaults` table in the
 
 ### Link notation
 
+Set `follow_link_auto_open = true` to open an ordinary note link directly
+when its target is unique. Duplicate titles still open a picker. Missing
+targets follow `follow_creates_nonexisting` and your template settings.
+Periodic navigation has its own option, `journal_auto_open`.
+
 The following links are supported:
 
 ```markdown

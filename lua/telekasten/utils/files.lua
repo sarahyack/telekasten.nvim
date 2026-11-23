@@ -654,37 +654,43 @@ function M.Pinfo:resolve_link(title, opts)
         kind = "yearly"
     end
 
+    local matches = opts.check_ambiguous and {}
+    local function found(path)
+        if matches and not vim.tbl_contains(matches, path) then
+            table.insert(matches, path)
+        end
+        self.filepath = path
+        self.fexists = true
+    end
+
     if kind ~= nil then
         local path, _, root_dir, _ =
             periodic.build_path(opts.periodic, kind, dinfo, opts.extension)
-
         if path and M.file_exists(path) then
-            self.filepath = path
-            self.fexists = true
+            found(path)
             self.root_dir = root_dir or opts.home
         end
     end
 
-    if M.file_exists(opts.home .. "/" .. self.filename) then
-        self.filepath = opts.home .. "/" .. self.filename
-        self.fexists = true
+    local home_path = opts.home .. "/" .. self.filename
+    if M.file_exists(home_path) then
+        found(home_path)
     end
 
-    -- If still nothing found, check subdirectories
-    if self.fexists == false then
-        -- now search for it in all subdirs
+    if not self.fexists or matches then
         local subdirs = scan.scan_dir(opts.home, { only_dirs = true })
-        local tempfn
-        for _, folder in pairs(subdirs) do
-            tempfn = folder .. "/" .. self.filename
-            -- [[testnote]]
-            if M.file_exists(tempfn) then
-                self.filepath = tempfn
-                self.fexists = true
-                -- print("Found: " ..self.filename)
-                break
+        for _, folder in ipairs(subdirs) do
+            local path = folder .. "/" .. self.filename
+            if M.file_exists(path) then
+                found(path)
+                if not matches then
+                    break
+                end
             end
         end
+    end
+    if matches and #matches > 1 then
+        self.matches = matches
     end
 
     -- if we just cannot find the note, check if it's a periodic one
@@ -794,7 +800,7 @@ function M.find_files_sorted(opts)
     local search_depth = opts.search_depth or nil
     local scan_opts = { search_pattern = search_pattern, depth = search_depth }
 
-    local file_list = scan.scan_dir(opts.cwd, scan_opts)
+    local file_list = opts.files or scan.scan_dir(opts.cwd, scan_opts)
     local filter_extensions = opts.filter_extensions
         or config.options.filter_extensions
     file_list = filter_filetypes(file_list, filter_extensions)

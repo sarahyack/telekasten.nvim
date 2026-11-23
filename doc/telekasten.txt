@@ -403,6 +403,12 @@ telekasten.setup({opts})
 
         Default: 'filename'
 
+    follow_link_auto_open: ~                 *telekasten.settings.follow_link_auto_open*
+        Set to true to open a uniquely matched ordinary note link directly.
+        Ambiguous matches use the picker. Missing notes follow the creation
+        and template settings. The default is false. For periodic navigation
+        see |telekasten.settings.journal_auto_open|.
+
                            *telekasten.settings.follow_create_nonexisting*
     follow_creates_nonexisting: ~
         Flag that determines whether non-existing notes should be created when
