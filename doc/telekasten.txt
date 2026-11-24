@@ -548,8 +548,8 @@ telekasten.setup({opts})
 
                                    *telekasten.settings.rename_update_links*
     rename_update_links: ~
-        If `true`, telekasten will automatically update the links after a file
-        has been renamed.
+        When enabled, renaming a note updates links on disk and in open
+        notes. Other edits in those notes stay unsaved.
 
         Default: `true`
 

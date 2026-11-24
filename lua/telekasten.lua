@@ -331,86 +331,138 @@ local function YankLink()
     print("yanked " .. title)
 end
 
+-- :saveas can rename the buffer and write the destination before a write hook fails.
+local function move_note(oldfile, newname, newpath)
+    local oldpath = oldfile.filepath
+    local buf = vim.api.nvim_get_current_buf()
+    local modified = vim.bo[buf].modified
+    local before = vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+    local function remove_alternate()
+        local alternate = vim.fn.bufnr(oldpath)
+        if alternate ~= -1 and alternate ~= buf then
+            vim.api.nvim_buf_delete(alternate, {})
+        end
+    end
+    assert(
+        vim.fn.getftype(newpath) == "",
+        "Destination already exists: " .. newpath
+    )
+    local ok, err = pcall(function()
+        vim.cmd("saveas " .. vim.fn.fnameescape(newpath))
+        -- Write hooks run before backlink edits, so they see the normal save
+        -- and any edits they make are included when we read the backlinks.
+        linkutils.rename_update_links(oldfile, newname, function()
+            remove_alternate()
+            assert(os.remove(oldpath))
+        end)
+    end)
+    if not ok then
+        if vim.api.nvim_buf_get_name(buf) == newpath then
+            remove_alternate()
+            vim.api.nvim_buf_call(buf, function()
+                vim.cmd(
+                    "silent noautocmd keepalt file "
+                        .. vim.fn.fnameescape(oldpath)
+                )
+            end)
+            if vim.fn.getftype(newpath) == "file" then
+                assert(os.remove(newpath))
+            end
+        end
+        if
+            not vim.deep_equal(
+                before,
+                vim.api.nvim_buf_get_lines(buf, 0, -1, false)
+            )
+        then
+            vim.api.nvim_buf_set_lines(buf, 0, -1, false, before)
+        end
+        vim.bo[buf].modified = modified
+        error(err)
+    end
+end
+
 --- RenameNote()
 --- Prompt for new note title, rename the note and update all links.
 local function RenameNote()
+    local buf = vim.api.nvim_get_current_buf()
+    local options = config.options
     local oldfile =
-        fileutils.Pinfo:new({ filepath = vim.fn.expand("%:p"), config.options })
-
-    local old_ext = extensions.suffix(oldfile.filepath)
-        or config.options.extension
+        fileutils.Pinfo:new({ filepath = vim.fn.expand("%:p"), options })
+    -- Compare the buffer filename with its root in the same spelling.
+    local root = vim.fn.fnamemodify(oldfile.root_dir, ":p")
+    if
+        not options.note_extensions
+        and options.subdirs_in_links
+        and vim.startswith(oldfile.filepath, root)
+    then
+        oldfile.title = oldfile.filepath:sub(#root + 1, -#options.extension - 1)
+    end
+    local function source_is_open()
+        if
+            options == config.options
+            and vim.api.nvim_buf_is_loaded(buf)
+            and vim.api.nvim_buf_get_name(buf) == oldfile.filepath
+        then
+            return true
+        end
+        tkutils.print_error(
+            "The note or vault changed before the rename finished"
+        )
+        return false
+    end
+    local old_ext = extensions.suffix(oldfile.filepath) or options.extension
     fileutils.prompt_title(old_ext, oldfile.title, function(newname)
-        if newname == "" then
+        if
+            newname == ""
+            or newname == oldfile.title
+            or not source_is_open()
+        then
             return
         end
-        local new_ext = extensions.suffix(newname)
-        if new_ext then
-            newname = newname:sub(1, -#new_ext - 1)
-        end
-        new_ext = new_ext or old_ext
-        local fname
-        if config.options.note_extensions then
-            local dir = newname:find("/", 1, true) and config.options.home
-                or vim.fn.fnamemodify(oldfile.filepath, ":h")
-            fname = Path:new(newname):is_absolute() and (newname .. new_ext)
-                or Path:new(dir, newname .. new_ext):absolute()
-        else
-            if
-                config.options.subdirs_in_links
-                and not newname:find("/", 1, true)
-                and oldfile.sub_dir ~= ""
-            then
-                newname = oldfile.sub_dir .. "/" .. newname
+        local dest
+        if options.note_extensions then
+            local ext = extensions.suffix(newname)
+            if ext then
+                newname = newname:sub(1, -#ext - 1)
             end
-            fname = config.options.home .. "/" .. newname .. new_ext
+            local dir = newname:find("/", 1, true) and options.home
+                or vim.fn.fnamemodify(oldfile.filepath, ":h")
+            local name = newname .. (ext or old_ext)
+            dest = Path:new(name):is_absolute() and name
+                or Path:new(dir, name):absolute()
+        else
+            if options.subdirs_in_links and not newname:find("/", 1, true) then
+                newname = (oldfile.title:match(".*/") or "") .. newname
+            end
+            dest = vim.fn.fnamemodify(
+                options.home .. "/" .. newname .. options.extension,
+                ":p"
+            )
         end
-        local newpath = vim.fn.fnamemodify(fname, ":h")
-        local fexists = fileutils.file_exists(fname)
-        if fexists then
-            tkutils.print_error("File alreay exists. Renaming abandoned")
+        if vim.fn.getftype(dest) ~= "" then
+            tkutils.print_error("File already exists. Renaming abandoned")
             return
         end
-
-        -- Savas newfile, delete buffer of old one and remove old file
-        if fname ~= oldfile.filepath then
-            fileutils.check_dir_and_ask(
-                newpath,
-                "Renamed file",
-                function(success)
-                    if not success then
-                        return
-                    end
-
-                    if config.options.note_extensions then
-                        local ok, err =
-                            pcall(extensions.rename, oldfile.filepath, fname)
-                        if not ok then
-                            vim.notify(tostring(err), vim.log.levels.ERROR)
+        fileutils.check_dir_and_ask(
+            vim.fn.fnamemodify(dest, ":h"),
+            "Renamed file",
+            function(success)
+                if success and source_is_open() then
+                    -- A picker may have returned focus to a different buffer.
+                    local ok, err = pcall(vim.api.nvim_buf_call, buf, function()
+                        if options.note_extensions then
+                            extensions.rename(oldfile.filepath, dest)
+                        else
+                            move_note(oldfile, newname, dest)
                         end
-                        return
+                    end)
+                    if not ok then
+                        vim.notify(tostring(err), vim.log.levels.ERROR)
                     end
-                    local oldTitle = oldfile.title:gsub(" ", "\\ ")
-                    vim.cmd(
-                        "saveas "
-                            .. config.options.home
-                            .. "/"
-                            .. newname
-                            .. config.options.extension
-                    )
-                    vim.cmd("bdelete " .. oldTitle .. config.options.extension)
-                    os.execute(
-                        "rm "
-                            .. config.options.home
-                            .. "/"
-                            .. oldTitle
-                            .. config.options.extension
-                    )
-                    linkutils.rename_update_links(oldfile, newname)
                 end
-            )
-        else
-            linkutils.rename_update_links(oldfile, newname)
-        end
+            end
+        )
     end)
 end
 
