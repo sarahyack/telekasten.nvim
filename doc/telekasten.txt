@@ -946,8 +946,8 @@ telekasten.insert_link({opts}) ~
                                            *telekasten.insert_link.with_alias*
   with_alias: ~
     Set to true to insert `[[target|alias]]`. Telekasten reads a single-line
-    `alias:` from YAML frontmatter, then tries the first level-one Markdown
-    heading. Without a usable title the link contains only the target.
+    `alias:` from YAML frontmatter, then tries the first heading written as
+    `# Project title`. Without a usable title the link contains only the target.
     This also works with `with_live_grep`. Default: `false`.
 
   with_live_grep: ~

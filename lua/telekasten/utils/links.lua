@@ -128,7 +128,7 @@ M.generate_backlink_map = function(opts)
     return ret
 end
 
--- Read a single-line frontmatter alias or the first level-one heading.
+-- Read a single-line frontmatter alias or the first # heading.
 function M.note_alias(path)
     local lines
     for _, buf in ipairs(vim.api.nvim_list_bufs()) do

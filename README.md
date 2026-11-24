@@ -381,9 +381,9 @@ See the documentation for more details regarding the different types of links
 A note link can display a readable title while pointing to a UUID, for
 example `[[201705061300|Project title]]`. To insert one, call
 `require("telekasten").insert_link({ with_alias = true })`. Telekasten uses
-the single-line YAML `alias:` field or the first level-one heading. With no
-usable title it inserts the target alone. The option works with filename
-search and with `with_live_grep = true`.
+the single-line YAML `alias:` field, then looks for the first heading written as
+`# Project title`. With no usable title it inserts the target alone. The
+option works with filename search and with `with_live_grep = true`.
 
 #### External File Linking
 
