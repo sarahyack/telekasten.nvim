@@ -497,6 +497,9 @@ the following mappings apply:
   action defined by the called function
   - e.g. `insert_img_link()`'s action is to insert a link to the selected image.
 
+Press `?` in Telescope’s normal mode to see the picker mappings. Telescope
+versions that support descriptions show the action beside its configured key.
+
 ### Calendar
 
 When invoking `show_calendar()`, a calendar showing the previous, current, and

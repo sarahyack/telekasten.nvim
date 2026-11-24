@@ -154,8 +154,11 @@ function M.picker_actions.paste_link(opts)
     opts.subdirs_in_links = opts.subdirs_in_links
         or config.options.subdirs_in_links
     return function(prompt_bufnr)
-        actions.close(prompt_bufnr)
         local selection = action_state.get_selected_entry()
+        if not selection then
+            return
+        end
+        actions.close(prompt_bufnr)
         local pinfo = fileutils.Pinfo:new({
             filepath = selection.filename or selection.value,
             opts,
@@ -177,10 +180,13 @@ function M.picker_actions.yank_link(opts)
         opts = opts or {}
         opts.subdirs_in_links = opts.subdirs_in_links
             or config.options.subdirs_in_links
+        local selection = action_state.get_selected_entry()
+        if not selection then
+            return
+        end
         if opts.close_after_yanking then
             actions.close(prompt_bufnr)
         end
-        local selection = action_state.get_selected_entry()
         local pinfo = fileutils.Pinfo:new({
             filepath = selection.filename or selection.value,
             opts,
@@ -256,26 +262,31 @@ M.apply_picker_mappings = function(opts, default_select_func)
                 "i",
                 config.options.keybinds.picker.i_yank_link,
                 M.picker_actions.yank_link(opts),
+                "Yank note link",
             },
             {
                 "i",
                 config.options.keybinds.picker.i_paste_link,
                 M.picker_actions.paste_link(opts),
+                "Insert note link",
             },
             {
                 "n",
                 config.options.keybinds.picker.yank_link,
                 M.picker_actions.yank_link(opts),
+                "Yank note link",
             },
             {
                 "n",
                 config.options.keybinds.picker.paste_link,
                 M.picker_actions.paste_link(opts),
+                "Insert note link",
             },
             {
                 "n",
                 config.options.keybinds.picker.close,
                 M.picker_actions.close(opts),
+                "Close picker",
             },
         }
         for _, mc in pairs(map_conf) do
@@ -283,7 +294,12 @@ M.apply_picker_mappings = function(opts, default_select_func)
             -- Apply map for all given keys
             -- e.g. `keybinds.picker.close = {"<ESC>", "<C-c>"}`
             for _, key in pairs(vim.tbl_flatten({ mappings })) do
-                map(mode, key, action)
+                map(
+                    mode,
+                    key,
+                    action,
+                    vim.fn.has("nvim-0.7") == 1 and { desc = mc[4] } or nil
+                )
             end
         end
         return true
