@@ -213,8 +213,8 @@ function M.picker_actions.yank_link(opts)
             actions.close(prompt_bufnr)
         end
         local pinfo = fileutils.Pinfo:new({
-            filepath = selection.filename or selection.value,
-            opts,
+            filepath = entry_path(selection),
+            subdirs_in_links = opts.subdirs_in_links,
         })
         local title = "[[" .. pinfo.title .. "]]"
         vim.fn.setreg('"', title)
