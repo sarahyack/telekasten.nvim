@@ -425,6 +425,14 @@ telekasten.setup({opts})
 
         Default: 'filename'
 
+                                   *telekasten.settings.follow_link_auto_open*
+    follow_link_auto_open: ~
+        Set to true to open a uniquely matched ordinary note link directly.
+        Ambiguous matches use the picker. Missing notes follow the creation
+        and template settings. The default is false. For periodic navigation
+        see |telekasten.settings.journal_auto_open|.
+
+                              *telekasten.settings.follow_creates_nonexisting*
                            *telekasten.settings.follow_create_nonexisting*
     follow_creates_nonexisting: ~
         Flag that determines whether non-existing notes should be created when
@@ -1002,12 +1010,14 @@ telekasten.insert_link({opts}) ~
 
                                                    *telekasten.follow_link()*
 telekasten.follow_link() ~
-  Take the text between the brackets of a link pointing to a linked note, or
-  of a tag and open a Telescope file finder with it.
+  Follow the note link or tag under the cursor. By default Telescope previews
+  the target so you can choose what to open. Set
+  |telekasten.settings.follow_link_auto_open| to open a unique note directly.
+  A bare title with multiple matches still opens a picker. A link starting
+  with `./` identifies a path from the vault root.
 
-  If the linked note does not exist and the setting
-  `follow_creates_nonexisting` is set to `true`, a new note will be created
-  using the `new_note` template before invoking Telescope.
+  A missing note can be created using the configured creation and template
+  settings. Periodic navigation uses |telekasten.settings.journal_auto_open|.
 
   See also: ~
       - |telekasten.settings.follow_creates_nonexisting|

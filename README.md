@@ -32,8 +32,8 @@ based on [telescope.nvim](https://github.com/nvim-telescope/telescope.nvim).
 
 ## Search-based navigation
 
-Every navigation action, like following a link, is centered around a Telescope
-picker. You can then decide to actually open the note or just read the content
+By default, following a note link opens a Telescope picker. You can then
+decide to open the note or just read the content
 from the picker itself. Thanks to [Telescope actions](#picker-actions) you can
 also just insert a link to the note or yank a link instead of opening the note.
 
@@ -246,7 +246,11 @@ The following sub-commands are defined:
   configuration. For example, `search_ignore_patterns = { "logseq/bak/" }`
   hides Logseq backups alongside the exclusions already configured in Telescope.
 - `insert_link` : Insert a link to a note
-- `follow_link` : Follow the link under the cursor
+- `follow_link` : Preview the note linked under the cursor. Set
+  `follow_link_auto_open = true` to open a unique match directly.
+  `[[./one/twin]]` names a path from the vault root. A bare `[[twin]]` with
+  multiple matches opens a picker. For daily and other periodic navigation,
+  use `journal_auto_open`.
 - `goto_today` : Open today's daily note.
 - `new_note` : Create a new note from the title you enter. Include a directory
   to choose its location. For example, `bar` and `foo/bar` create two distinct
