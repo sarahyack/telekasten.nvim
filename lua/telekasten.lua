@@ -1876,11 +1876,9 @@ local function Setup(cfg)
     -- Setup base user configuration and apply it, use default automatically for
     -- the rest
     if type(cfg.extension) == "table" and cfg.home then
-        cfg = vim.tbl_extend(
-            "force",
-            cfg,
-            { home = vim.fn.simplify(cfg.home .. "/.") }
-        )
+        -- The note index, picker selections and buffer names use absolute paths.
+        local home = vim.fn.fnamemodify(cfg.home .. "/.", ":p:h")
+        cfg = vim.tbl_extend("force", cfg, { home = vim.fn.simplify(home) })
     end
     config.setup(cfg)
 
