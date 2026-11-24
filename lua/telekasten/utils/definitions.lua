@@ -79,6 +79,7 @@
 ---@field follow_url_fallback string|nil
 ---@field enable_create_new boolean
 ---@field clipboard_program string
+---@field search_ignore_patterns? string[]
 ---@field filter_extensions string[]
 ---@field template_new_note string|nil
 ---@field keybinds Keybinds
