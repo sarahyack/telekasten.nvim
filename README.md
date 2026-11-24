@@ -254,7 +254,8 @@ The following sub-commands are defined:
 - `insert_img_link` : Browse images / media files and insert a link to the selected one
 - `preview_img` : preview image under the cursor
 - `browse_media` : Browse images / media files
-- `rename_note` : Rename current note and update the links pointing to it
+- `rename_note` : Rename the current note and update links pointing to it.
+  Backlinks in open notes are updated too. Other edits in those notes stay unsaved.
 - `switch_vault` : switch the vault. Brings up a picker. See the `vaults` config
   option for more.
 

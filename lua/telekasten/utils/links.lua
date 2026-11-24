@@ -171,33 +171,151 @@ function M.follow_url(url)
     end
 end
 
---- rename_update_links(oldfile, newname)
--- Update links with name change if configured to
--- @param oldfile table Pinfo table for the file having its name changed
--- @param newname string New name for the note at oldfile
-function M.rename_update_links(oldfile, newname)
-    if config.options.rename_update_links == true then
-        -- Only look for the first part of the link, so we do not touch to #heading or #^paragraph
-        -- Should use regex instead to ensure it is a proper link
-        local oldlink = "[[" .. oldfile.title
-        local newlink = "[[" .. newname
+-- Use ripgrep's existing Markdown and ignore rules for both copies of a note.
+local function markdown_paths(roots, needle)
+    local cmd = { "rg", "--null", "--type", "markdown" }
+    vim.list_extend(
+        cmd,
+        needle and { "--files-with-matches", "--fixed-strings", "--", needle }
+            or { "--files", "--" }
+    )
+    local output = vim.fn.systemlist(vim.list_extend(cmd, roots), "", 1)
+    assert(
+        vim.v.shell_error <= 1,
+        "Could not find notes: " .. table.concat(output, "\n")
+    )
+    -- systemlist represents the NUL after each filename as a newline within an item.
+    for i, line in ipairs(output) do
+        output[i] = line:gsub("\n", "\0")
+    end
+    local paths = {}
+    for path in table.concat(output, "\n"):gmatch("[^%z]+") do
+        paths[vim.fn.simplify(path)] = true
+    end
+    return paths
+end
 
-        -- Save open buffers before looking for links to replace
-        if #(vim.fn.getbufinfo({ bufmodified = 1 })) > 1 then
-            vim.ui.select({ "Yes (default)", "No" }, {
-                prompt = "Telekasten.nvim: "
-                    .. "Save all modified buffers before updating links?",
-            }, function(answer)
-                if answer ~= "No" then
-                    tkutils.save_all_mod_buffers()
-                end
+-- A backlink on disk and in a loaded buffer can have different text.
+-- Prepare each edit against the version it will actually update.
+local function backlink_changes(oldname, newname)
+    local changes = {}
+    local pattern = "%[%[" .. tkutils.escape(oldname) .. "(%s*[]#|])"
+    local function record(path, buf, before)
+        local after
+        for i, line in ipairs(before) do
+            local updated = line:gsub(pattern, function(tail)
+                return "[[" .. newname .. tail
             end)
+            if updated ~= line then
+                after = after or vim.list_slice(before)
+                after[i] = updated
+            end
         end
+        if after then
+            assert(
+                buf and vim.bo[buf].modifiable
+                    or not buf and vim.fn.filewritable(path) == 1,
+                "Cannot update backlinks in " .. path
+            )
+            table.insert(changes, {
+                path = path,
+                buf = buf,
+                before = before,
+                after = after,
+                modified = buf and vim.bo[buf].modified,
+            })
+        end
+    end
 
-        local roots = fileutils.assemble_roots({ include_aux = false })
-        for _, dir in ipairs(roots) do
-            tkutils.recursive_substitution(dir, oldlink, newlink)
+    local roots = {}
+    for _, dir in ipairs(fileutils.assemble_roots({ include_aux = false })) do
+        if vim.fn.isdirectory(dir) == 1 then
+            table.insert(roots, vim.fn.fnamemodify(dir, ":p"))
         end
+    end
+    if #roots == 0 then
+        return changes
+    end
+    for path in pairs(markdown_paths(roots, "[[" .. oldname)) do
+        record(path, nil, vim.fn.readfile(path, "b"))
+    end
+    -- A link may exist only in memory, even in a note awaiting its first save.
+    local notes = markdown_paths(roots)
+    for _, info in ipairs(vim.fn.getbufinfo({ bufloaded = 1 })) do
+        local path = info.name
+        if
+            vim.bo[info.bufnr].buftype == ""
+            and vim.endswith(path, config.options.extension)
+            and vim.fn.getftype(path) == ""
+        then
+            for _, root in ipairs(roots) do
+                if vim.startswith(path, root) then
+                    notes[path] = true
+                    break
+                end
+            end
+        end
+        if notes[path] then
+            record(
+                path,
+                info.bufnr,
+                vim.api.nvim_buf_get_lines(info.bufnr, 0, -1, false)
+            )
+        end
+    end
+    return changes
+end
+
+local function write_change(change, lines)
+    if change.buf then
+        for i, line in ipairs(lines) do
+            if change.before[i] ~= change.after[i] then
+                vim.api.nvim_buf_set_lines(
+                    change.buf,
+                    i - 1,
+                    i,
+                    false,
+                    { line }
+                )
+            end
+        end
+        vim.bo[change.buf].modified = change.modified
+    else
+        assert(
+            vim.fn.writefile(lines, change.path, "b") == 0,
+            "Could not update " .. change.path
+        )
+    end
+end
+
+--- Update saved backlinks and loaded copies, preserving any unsaved edits.
+--- When renaming a file, restore the links if the move fails.
+function M.rename_update_links(oldfile, newname, move)
+    local changes = config.options.rename_update_links
+            and backlink_changes(oldfile.title, newname)
+        or {}
+    local applied = 0
+    local ok, err = pcall(function()
+        for i, change in ipairs(changes) do
+            local current = change.buf
+                    and vim.api.nvim_buf_get_lines(change.buf, 0, -1, false)
+                or vim.fn.readfile(change.path, "b")
+            assert(
+                vim.deep_equal(current, change.before),
+                "Note changed during rename: " .. change.path
+            )
+            applied = i
+            write_change(change, change.after)
+        end
+        if move then
+            move()
+        end
+    end)
+    if not ok then
+        for i = applied, 1, -1 do
+            write_change(changes[i], changes[i].before)
+        end
+        error(err)
     end
 end
 
