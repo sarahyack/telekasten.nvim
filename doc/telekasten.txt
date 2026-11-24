@@ -308,6 +308,10 @@ telekasten.setup({opts})
         If `false`, the telekasten filetype will not be set. Markdown
         files will get the markdown filetype.
 
+        On Neovim 0.9 and newer, the telekasten filetype can use an installed
+        Markdown Tree-sitter parser. An existing language registration or a
+        native Telekasten parser takes precedence.
+
         Default: `true`
 
                                    *telekasten.settings.auto_set_syntax*

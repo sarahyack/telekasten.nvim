@@ -180,6 +180,13 @@ pick the correct illustrations for your note.
 _Image pasting is supported by default on MacOS, it is not necessary to install
 any other tool._
 
+#### Markdown Tree-sitter parser
+
+On Neovim 0.9 and newer, installing a Markdown parser lets Tree-sitter parse
+Telekasten notes while their filetype stays `telekasten`. If you have a native
+Telekasten parser or already mapped the filetype to another language,
+Telekasten respects that choice.
+
 #### Other useful resources/plugins
 
 While they do not interact directly with Telekasten, the following plugins

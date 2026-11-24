@@ -1907,6 +1907,17 @@ local function Setup(cfg)
         normal = config.options.template_new_note,
     }
 
+    local language = vim.treesitter.language
+    if language and language.register then
+        local current = language.get_lang("telekasten")
+        if
+            (current == nil or current == "telekasten")
+            and not pcall(vim.treesitter.get_string_parser, "", "telekasten")
+        then
+            language.register("markdown", "telekasten")
+        end
+    end
+
     -- for previewers to pick up our syntax, we need to tell plenary to override `.md` with our syntax
     if config.options.auto_set_filetype or config.options.auto_set_syntax then
         filetype.add_file("telekasten")
