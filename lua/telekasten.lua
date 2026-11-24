@@ -186,26 +186,7 @@ local function InsertLink(opts)
 
         local attach_mappings = tkpickers.apply_picker_mappings(
             opts,
-            function(prompt_bufnr, _)
-                actions.close(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                if selection == nil then
-                    selection = { filename = action_state.get_current_line() }
-                end
-                local pinfo = fileutils.Pinfo:new({
-                    filepath = selection.filename or selection.value,
-                    opts,
-                })
-                vim.api.nvim_put(
-                    { "[[" .. pinfo.title .. "]]" },
-                    "",
-                    false,
-                    true
-                )
-                if opts.i then
-                    vim.api.nvim_feedkeys("a", "m", false)
-                end
-            end
+            tkpickers.picker_actions.paste_link(opts, true)
         )
 
         -- Open picker for users to chose note, preferring live grep
