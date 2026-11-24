@@ -40,6 +40,7 @@ CONTENTS
         3.5 Calendar ....................... |telekasten.calendar|
         3.6 Picker mappings ................ |telekasten.picker_mappings|
         3.7 Multiple home directories....... |telekasten.switch_vaults|
+        3.8 Heading folds .................. |telekasten.heading_folds|
     4. Suggested mappings .................. |telekasten.mappings|
     5. FAQ ................................. |telekasten.faq|
         5.1 Windows ........................ |telekasten.windows|
@@ -1475,6 +1476,13 @@ With no `default_vault`, Telekasten uses `vaults.default` if present.
 Otherwise, a top-level `home` and its settings become the default vault.
 Use `:Telekasten switch_vault` to choose another configured vault.
 
+
+--------------------------------------------------------------------------------
+Section 3.8: Heading folds                              *telekasten.heading_folds*
+
+Telekasten notes support Markdown heading folds. Set `g:markdown_folding` to
+1 to enable them, then use |zc| and |zo| to close or open a section. With
+heading folding off, the window keeps its usual fold method.
 
 ================================================================================
 Section 4: Suggested Mappings                              *telekasten.mappings*

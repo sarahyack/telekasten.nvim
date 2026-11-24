@@ -23,7 +23,8 @@ else
 endif
 
 function! s:NotCodeBlock(lnum) abort
-  return synIDattr(synID(v:lnum, 1, 1), 'name') !=# 'markdownCode'
+  let group = synIDattr(synID(a:lnum, 1, 1), 'name')
+  return index(['markdownCode', 'markdownCodeBlock'], group) < 0
 endfunction
 
 function! MarkdownFold() abort
@@ -67,11 +68,11 @@ function! MarkdownFoldText() abort
   return hash_indent.' '.title.' '.linecount
 endfunction
 
-if has("folding") && exists("g:markdown_folding")
+if has("folding") && get(g:, "markdown_folding", 0)
   setlocal foldexpr=MarkdownFold()
   setlocal foldmethod=expr
   setlocal foldtext=MarkdownFoldText()
-  let b:undo_ftplugin .= " foldexpr< foldmethod< foldtext<"
+  let b:undo_ftplugin .= "|setlocal foldexpr< foldmethod< foldtext<"
 endif
 
 " vim:set sw=2:
