@@ -152,6 +152,18 @@ require('telekasten').setup({
 `C:/Users/username/zettelkasten/`. See `:h telekasten.windows` for more details
 about the specificities for Windows.
 
+#### Note extensions
+
+A vault can contain notes with several filename extensions. Set
+`extension = { ".md", ".qmd" }` to search and link both kinds. New notes use
+the first extension unless you include another configured extension in the title.
+
+When two files share a name, selecting one inserts a link that leads back to
+that file. For example, selecting the root `twin.md` alongside
+`archive/twin.md` can produce `[[./twin.md]]`. An existing bare `[[twin]]`
+that matches both `twin.md` and `twin.qmd` offers both choices. Renaming
+either note leaves that ambiguous link alone.
+
 ### Suggested dependencies
 
 #### Calendar

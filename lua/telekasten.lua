@@ -1,3 +1,4 @@
+local extensions = require("telekasten.extensions")
 local builtin = require("telescope.builtin")
 local actions = require("telescope.actions")
 local action_state = require("telescope.actions.state")
@@ -188,31 +189,13 @@ local function InsertLink(opts)
 
         local attach_mappings = tkpickers.apply_picker_mappings(
             opts,
-            function(prompt_bufnr, _)
-                actions.close(prompt_bufnr)
-                local selection = action_state.get_selected_entry()
-                if selection == nil then
-                    selection = { filename = action_state.get_current_line() }
-                end
-                local pinfo = fileutils.Pinfo:new({
-                    filepath = selection.filename or selection.value,
-                    opts,
-                })
-                vim.api.nvim_put(
-                    { "[[" .. pinfo.title .. "]]" },
-                    "",
-                    false,
-                    true
-                )
-                if opts.i then
-                    vim.api.nvim_feedkeys("a", "m", false)
-                end
-            end
+            tkpickers.picker_actions.paste_link(opts, true)
         )
 
         -- Open picker for users to chose note, preferring live grep
         if opts.with_live_grep then
             builtin.live_grep({
+                glob_pattern = config.options.note_globs,
                 prompt_title = "Insert link to note with live grep",
                 cwd = cwd,
                 attach_mappings = attach_mappings,
@@ -326,6 +309,7 @@ local function FindFriends(opts)
         title = title:gsub("^(%[)(.+)(%])$", "%2")
 
         builtin.live_grep({
+            glob_pattern = config.options.note_globs,
             prompt_title = "Notes referencing `" .. title .. "`",
             cwd = config.options.home,
             default_text = "\\[\\[" .. title .. "([#|].+)?\\]\\]",
@@ -355,68 +339,81 @@ local function RenameNote()
     local oldfile =
         fileutils.Pinfo:new({ filepath = vim.fn.expand("%:p"), config.options })
 
-    fileutils.prompt_title(
-        config.options.extension,
-        oldfile.title,
-        function(newname)
-            local newpath = newname:match("(.*/)") or ""
-            newpath = config.options.home .. "/" .. newpath
-
-            -- If no subdir specified, place the new note in the same place as old note
+    local old_ext = extensions.suffix(oldfile.filepath)
+        or config.options.extension
+    fileutils.prompt_title(old_ext, oldfile.title, function(newname)
+        if newname == "" then
+            return
+        end
+        local new_ext = extensions.suffix(newname)
+        if new_ext then
+            newname = newname:sub(1, -#new_ext - 1)
+        end
+        new_ext = new_ext or old_ext
+        local fname
+        if config.options.note_extensions then
+            local dir = newname:find("/", 1, true) and config.options.home
+                or vim.fn.fnamemodify(oldfile.filepath, ":h")
+            fname = Path:new(newname):is_absolute() and (newname .. new_ext)
+                or Path:new(dir, newname .. new_ext):absolute()
+        else
             if
-                config.options.subdirs_in_links == true
-                and newpath == config.options.home .. "/"
+                config.options.subdirs_in_links
+                and not newname:find("/", 1, true)
                 and oldfile.sub_dir ~= ""
             then
                 newname = oldfile.sub_dir .. "/" .. newname
             end
-
-            local fname = config.options.home
-                .. "/"
-                .. newname
-                .. config.options.extension
-            local fexists = fileutils.file_exists(fname)
-            if fexists then
-                tkutils.print_error("File alreay exists. Renaming abandoned")
-                return
-            end
-
-            -- Savas newfile, delete buffer of old one and remove old file
-            if newname ~= "" and newname ~= oldfile.title then
-                fileutils.check_dir_and_ask(
-                    newpath,
-                    "Renamed file",
-                    function(success)
-                        if not success then
-                            return
-                        end
-
-                        local oldTitle = oldfile.title:gsub(" ", "\\ ")
-                        vim.cmd(
-                            "saveas "
-                                .. config.options.home
-                                .. "/"
-                                .. newname
-                                .. config.options.extension
-                        )
-                        vim.cmd(
-                            "bdelete " .. oldTitle .. config.options.extension
-                        )
-                        os.execute(
-                            "rm "
-                                .. config.options.home
-                                .. "/"
-                                .. oldTitle
-                                .. config.options.extension
-                        )
-                        linkutils.rename_update_links(oldfile, newname)
-                    end
-                )
-            else
-                linkutils.rename_update_links(oldfile, newname)
-            end
+            fname = config.options.home .. "/" .. newname .. new_ext
         end
-    )
+        local newpath = vim.fn.fnamemodify(fname, ":h")
+        local fexists = fileutils.file_exists(fname)
+        if fexists then
+            tkutils.print_error("File alreay exists. Renaming abandoned")
+            return
+        end
+
+        -- Savas newfile, delete buffer of old one and remove old file
+        if fname ~= oldfile.filepath then
+            fileutils.check_dir_and_ask(
+                newpath,
+                "Renamed file",
+                function(success)
+                    if not success then
+                        return
+                    end
+
+                    if config.options.note_extensions then
+                        local ok, err =
+                            pcall(extensions.rename, oldfile.filepath, fname)
+                        if not ok then
+                            vim.notify(tostring(err), vim.log.levels.ERROR)
+                        end
+                        return
+                    end
+                    local oldTitle = oldfile.title:gsub(" ", "\\ ")
+                    vim.cmd(
+                        "saveas "
+                            .. config.options.home
+                            .. "/"
+                            .. newname
+                            .. config.options.extension
+                    )
+                    vim.cmd("bdelete " .. oldTitle .. config.options.extension)
+                    os.execute(
+                        "rm "
+                            .. config.options.home
+                            .. "/"
+                            .. oldTitle
+                            .. config.options.extension
+                    )
+                    linkutils.rename_update_links(oldfile, newname)
+                end
+            )
+        else
+            linkutils.rename_update_links(oldfile, newname)
+        end
+    end)
 end
 
 --- FindNotes(opts)
@@ -449,6 +446,7 @@ local function FindNotes(opts)
 
         if opts.with_live_grep then
             builtin.live_grep({
+                glob_pattern = config.options.note_globs,
                 prompt_title = "Find notes by live grep",
                 cwd = cwd,
                 find_command = find_command,
@@ -625,6 +623,7 @@ local function SearchNotes(opts)
         end
 
         builtin.live_grep({
+            glob_pattern = config.options.note_globs,
             prompt_title = "Search in notes",
             cwd = config.options.home,
             search_dirs = { config.options.home },
@@ -659,12 +658,31 @@ local function ShowBacklinks(opts)
         local escaped_title = string.gsub(title, "%(", "\\(")
         escaped_title = string.gsub(escaped_title, "%)", "\\)")
 
+        local search_dirs = { config.options.home }
+        local suffix_pattern = "([#|].+)?"
+        if config.options.note_extensions then
+            local titles = extensions.unique_titles(
+                extensions.index(),
+                vim.fn.expand("%:p")
+            )
+            for i, target in ipairs(titles) do
+                titles[i] = vim.fn.escape(target, [=[\.^$*+?(){}|[]]=])
+            end
+            escaped_title = "(" .. table.concat(titles, "|") .. ")"
+            search_dirs = extensions.search_roots()
+            suffix_pattern = "([[:blank:]]*[#|][^]]*)?"
+        end
+
         builtin.live_grep({
+            glob_pattern = config.options.note_globs,
             results_title = "Backlinks to " .. title,
             prompt_title = "Search",
             cwd = config.options.home,
-            search_dirs = { config.options.home },
-            default_text = "\\[\\[" .. escaped_title .. "([#|].+)?\\]\\]",
+            search_dirs = search_dirs,
+            default_text = "\\[\\["
+                .. escaped_title
+                .. suffix_pattern
+                .. "\\]\\]",
             find_command = config.options.find_command,
             attach_mappings = tkpickers.apply_picker_mappings(opts),
         })
@@ -807,6 +825,7 @@ local function FollowLink(opts)
         local search_mode = "files"
         local title
         local filename_part = ""
+        local candidate_files
 
         -- first: check if we're in a tag or a link
         local kind
@@ -898,6 +917,7 @@ local function FollowLink(opts)
             if #filename_part > 0 then
                 local pinfo = fileutils.Pinfo:new({ title = filename_part })
                 filename_part = pinfo.filepath
+                candidate_files = pinfo.matches
                 if pinfo.fexists == false then
                     -- print("error")
                     filename_part = ""
@@ -915,8 +935,9 @@ local function FollowLink(opts)
                 local function picker()
                     fileutils.find_files_sorted({
                         prompt_title = "Follow link to note...",
+                        files = pinfo.matches,
                         cwd = pinfo.root_dir,
-                        default_text = title,
+                        default_text = pinfo.matches and "" or title,
                         find_command = config.options.find_command,
                         attach_mappings = tkpickers.apply_picker_mappings(opts),
                         sort = config.options.sort,
@@ -1212,7 +1233,9 @@ local function FollowLink(opts)
                         }
                     end
 
-                    if #filename_part > 0 then
+                    if candidate_files then
+                        vim.list_extend(search_command, candidate_files)
+                    elseif #filename_part > 0 then
                         table.insert(search_command, filename_part)
                     else
                         table.insert(search_command, cwd)
@@ -1852,6 +1875,11 @@ local function Setup(cfg)
 
     -- Setup base user configuration and apply it, use default automatically for
     -- the rest
+    if type(cfg.extension) == "table" and cfg.home then
+        -- The note index, picker selections and buffer names use absolute paths.
+        local home = vim.fn.fnamemodify(cfg.home .. "/.", ":p:h")
+        cfg = vim.tbl_extend("force", cfg, { home = vim.fn.simplify(home) })
+    end
     config.setup(cfg)
 
     -- Temporary shortcut to remove
@@ -1883,8 +1911,23 @@ local function Setup(cfg)
         SetupCalendar(config.options.calendar_opts)
     end
 
-    -- setup extensions to filter for
+    if type(cfg.extension) == "table" then
+        assert(#cfg.extension > 0, "extension must contain at least one suffix")
+        for _, ext in ipairs(cfg.extension) do
+            assert(
+                type(ext) == "string" and ext:match("^%.[^/\\]+$"),
+                "Invalid note extension"
+            )
+        end
+        config.options.note_extensions = vim.deepcopy(cfg.extension)
+        config.options.extension = cfg.extension[1]
+        config.options.note_globs = {}
+        for _, ext in ipairs(cfg.extension) do
+            table.insert(config.options.note_globs, "*" .. ext)
+        end
+    end
     config.options.filter_extensions = cfg.filter_extensions
+        or config.options.note_extensions
         or { config.options.extension }
 
     -- provide fake filenames for template loading to fail silently if template is configured off
@@ -1905,13 +1948,20 @@ local function Setup(cfg)
 
     if config.options.take_over_my_home == true then
         if config.options.auto_set_filetype then
-            vim.cmd(
-                "au BufEnter "
-                    .. config.options.home
-                    .. "/*"
-                    .. config.options.extension
-                    .. " set ft=telekasten"
-            )
+            for _, ext in
+                ipairs(
+                    config.options.note_extensions
+                        or { config.options.extension }
+                )
+            do
+                vim.cmd(
+                    "au BufEnter "
+                        .. vim.fn.fnameescape(config.options.home)
+                        .. "/*"
+                        .. vim.fn.escape(ext, " ,|")
+                        .. " set ft=telekasten"
+                )
+            end
         end
     end
 
